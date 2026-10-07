@@ -1,0 +1,10 @@
+{
+  "appId": "com.pianoflow.app",
+  "appName": "PianoFlow",
+  "webDir": "dist",
+  "ios": { "contentInset": "always" },
+  "server": {
+    "url": "http://REMPLACE_PAR_L_IP_DU_PC:4173",
+    "cleartext": true
+  }
+}

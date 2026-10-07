@@ -1,0 +1,11 @@
+node_modules/
+dist/
+pianoflow-data/
+.netlify/
+*.tsbuildinfo
+tests/_*.ts
+.env
+.env.*
+*.pem
+*.p12
+*.mobileprovision
