@@ -68,7 +68,7 @@ function renderPath() {
       <div class="cs-ovr"><div class="cs-ovr-bar"><i style="width:${(doneN / total) * 100}%"></i></div><small>${doneN} / ${total} leçons</small></div>
       <nav class="cs-toc">${UNITS.map((u) => {
         const ls = LESSONS.filter((l) => l.unit === u), d = ls.filter((l) => isDone(prog, l.id)).length, open = ls.some((l) => isUnlocked(prog, ids(), l.index, prefs.unlockAll));
-        return `<button data-unit="${u.id}" class="${d === ls.length ? "full" : ""} ${open ? "" : "lock"}"><span class="cs-ic" style="background:${u.color}">${iconOrText(u.icon, esc)}</span><span class="cs-tt">${esc(u.title)}</span><small>${d}/${ls.length}</small></button>`;
+        return `<button data-unit="${u.id}" class="${d === ls.length ? "full" : ""} ${open ? "" : "lock"}"><span class="cs-ic" style="--c:${u.color}">${iconOrText(u.icon, esc)}</span><span class="cs-tt">${esc(u.title)}</span><small>${d}/${ls.length}</small></button>`;
       }).join("")}</nav>
     </aside>
     <div class="cs-scroll" id="csScroll">

@@ -656,7 +656,7 @@ function coachStart() {
   coach = { id: songName, secs, stages, parts, partStages, full, prog, target: { kind: "done" } };
   coach.target = coachNext(coach);
   coachApply();
-  if (!prog.pct) toast("Commence par écouter le morceau en entier (bouton du coach) : savoir comment il doit sonner aide énormément.", 4200);
+  if (!prog.pct) toast("Commence par écouter le morceau en entier (bouton casque, dans la barre du coach) : savoir comment il doit sonner aide énormément.", 4200);
 }
 function coachStop() { coach = null; loopM = null; applyLoop(); renderCoach(); }
 /** Met le moteur dans la configuration de l'étape visée (boucle, main, mode, vitesse). */
@@ -1034,7 +1034,7 @@ function onKey(pitch: number, velocity: number, on: boolean) {
     const exp = follower.expected.find((n) => n.pitch === pitch);
     const ok = follower.noteOn(pitch);
     if (ok) { hits++; if (exp) falling.burst(exp); piano.press(pitch, "ok"); }
-    else { misses++; piano.press(pitch, "bad"); toast(noteName(pitch), 700); }
+    else { misses++; piano.press(pitch, "bad"); toast("✗ " + noteName(pitch), 700); }
     pianoSig = "";
   } else piano.press(pitch, "ok");                            // pendant la démo ▶ : simple retour visuel
 }

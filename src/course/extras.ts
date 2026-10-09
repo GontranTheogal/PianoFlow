@@ -44,7 +44,7 @@ const chordEar = L("u8-l6", "Majeur ou mineur, à l'oreille", ["Entendre si un a
 
 // ───────── premiers morceaux-étapes ─────────
 const twinkle = L("u3-l5", "Morceau-étape : Ah ! vous dirai-je, maman", ["Jouer un morceau complet aux deux mains, avec la méthode du coach"], (rng) => [
-  info("Ton premier vrai morceau", "Voici un morceau entier, mains ensemble. La méthode est toujours la même : main droite seule, main gauche seule, puis mains ensemble, lentement. Dans l'onglet Morceaux, le bouton Apprendre fait exactement ça pour toi, section par section. Ici, joue-le en entier, pas à pas.", undefined),
+  info("Ton premier vrai morceau", "Voici un morceau entier, mains ensemble. La méthode est toujours la même : main droite seule, main gauche seule, puis mains ensemble, lentement. Dans l'onglet Morceaux, le bouton « Apprendre » fait exactement ça pour toi, section par section. Ici, joue-le en entier, pas à pas.", undefined),
   mc(rng, "Pour apprendre un nouveau morceau, on commence par…", "chaque main seule, lentement", ["les deux mains au tempo", "la fin du morceau"], "Mains séparées d'abord, puis ensemble, toujours plus lentement qu'on ne le croit nécessaire : c'est la méthode de tous les professeurs."),
   repQ("twinkle", "Sur Sol–La, la main s'ouvre puis revient en position : suis les doigtés.", 80),
 ]);
@@ -114,7 +114,7 @@ const playInTime = L("u6-l8", "Jouer en mesure", ["Jouer une mélodie au tempo, 
   { ...pieceQ({ title: "Ode à la joie (en rythme)", goal: "Attention au « longue – courte » de la noire pointée.", bpm: 80, rh: rh(ODE), hands: "R", pass: 75 }), mode: "rhythm", speed: 70 } as Q,
 ]);
 const odeMilestone = L("u6-l9", "Morceau-étape : l'Ode à la joie, deux mains, en rythme", ["Jouer un morceau à deux mains au tempo"], (rng) => [
-  info("Deux mains, en rythme", "Tu as tout ce qu'il faut : les deux mains, la lecture, le rythme. Si c'est difficile, travaille-le d'abord dans l'onglet Morceaux avec Apprendre (mains séparées, puis ensemble, puis en rythme), puis reviens le valider ici.", undefined),
+  info("Deux mains, en rythme", "Tu as tout ce qu'il faut : les deux mains, la lecture, le rythme. Si c'est difficile, travaille-le d'abord dans l'onglet Morceaux avec le bouton « Apprendre » (mains séparées, puis ensemble, puis en rythme), puis reviens le valider ici.", undefined),
   mc(rng, "Un passage accroche toujours au même endroit : que faire ?", "le travailler seul, en boucle, lentement", ["rejouer tout le morceau plus vite", "le sauter"], "Isole la mesure difficile (bouton boucle), joue-la lentement jusqu'à ce qu'elle soit facile, puis raccroche-la au reste."),
   repQ("ode", "Deux mains, en rythme, 70 % de la vitesse au moins.", 75, "rhythm", 70),
 ]);
@@ -126,7 +126,7 @@ const hanon = L("u9-l5", "Morceau-étape : Hanon n°1", ["Jouer un exercice de v
   repQ("hanon1", "Puis en rythme, lentement (60 %) : chaque note à sa place.", 80, "rhythm", 60),
 ]);
 const prelude = L("ua-l5", "Morceau-étape : Prélude en Do de Bach", ["Jouer un vrai classique en arpèges aux deux mains"], (rng) => [
-  info("Bach, Prélude en Do majeur", "Chaque mesure est un seul accord, déroulé note par note et répété. Avant de jouer une mesure, plaque l'accord pour le mettre dans la main, puis déroule-le. Ici, les onze premières mesures ; le prélude complet est dans l'onglet Morceaux (niveau 2), à travailler avec Apprendre.", undefined),
+  info("Bach, Prélude en Do majeur", "Chaque mesure est un seul accord, déroulé note par note et répété. Avant de jouer une mesure, plaque l'accord pour le mettre dans la main, puis déroule-le. Ici, les onze premières mesures ; le prélude complet est dans l'onglet Morceaux (niveau 2), à travailler avec le bouton « Apprendre ».", undefined),
   mc(rng, "Chaque mesure de ce prélude est…", "un accord arpégé, joué deux fois", ["une gamme", "une mélodie nouvelle"], "Repère l'accord de la mesure (plaque-le), et les doigts n'ont plus qu'à le dérouler."),
   repQ("prelude-debut", "Deux mains, pas à pas, sans hésitation.", 80),
 ]);

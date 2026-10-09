@@ -272,7 +272,7 @@ function ivQs(rng: Rng, sizes: number[], n: number, play: number): Q[] {
   return shuffle(rng, out);
 }
 const u7: Unit = {
-  id: "u7", title: "Les intervalles", sub: "La distance entre deux notes", icon: "↔️", color: "#f87171", lessons: [
+  id: "u7", title: "Les intervalles", sub: "La distance entre deux notes", icon: "arrow-left-right", color: "#f87171", lessons: [
     L("u7-l1", "Seconde et tierce", ["Compter un intervalle", "Reconnaître et jouer une seconde et une tierce"], (rng) => [
       info("Pourquoi les intervalles ?", "Lire note par note, en nommant chacune, c'est lent. Les bons lecteurs lisent l'ÉCART avec la note précédente : « une tierce plus haut », et la main y va sans même nommer la note. Les intervalles servent aussi à construire les accords (on empile des tierces), à trouver ses doigtés (une quinte = l'écart de la main) et à reconnaître une mélodie à l'oreille.", undefined),
       info("Compter les notes", "Un intervalle est la distance entre deux notes. On le compte en notes, en comptant la première : Do→Ré = 2 notes, une seconde ; Do→Mi = 3 notes (Do Ré Mi), une tierce. Sur la portée : deux notes voisines = seconde ; une ligne ou un interligne sauté(e) = tierce.", chordShow("G", [P("C4"), P("E4")]), KB_RH),

@@ -9,7 +9,7 @@
 .cs-toc { display:flex; flex-direction:column; gap:2px; }
 .cs-toc button { display:flex; align-items:center; gap:10px; width:100%; border:none; background:none; padding:8px 10px; border-radius:12px; cursor:pointer; text-align:left; color:var(--sf-ink); font-size:14px; font-weight:600; font-family:inherit; }
 .cs-toc button:hover { background:var(--sf-chip); } .cs-toc button.lock { opacity:.5; }
-.cs-ic { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; font-size:16px; flex:none; color:#fff; } .cs-tt { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cs-ic { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; font-size:16px; flex:none; color:#fff; background:var(--c-strong, var(--c)); } .cs-tt { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cs-toc small { color:var(--sf-mute); font-weight:700; } .cs-toc button.full small { color:var(--ink-ok); }
 .cs-opts { max-width:640px; margin:10px auto 0; color:var(--sf-mute); font-size:13.5px; } .cs-opts > summary { cursor:pointer; font-weight:700; padding:6px 0; }
 .cs-opts[open] { display:flex; flex-direction:column; gap:10px; } .cs-opts .cs-reset { width:auto; align-self:flex-start; margin:0; }
