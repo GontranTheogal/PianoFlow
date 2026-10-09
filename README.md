@@ -8,12 +8,13 @@ Le clavier MIDI passe par Web MIDI : **Chrome, Edge ou Firefox** sur ordinateur.
 
 ## Développement
 
-Il faut Node 22.
+Il faut Node 22. Pour le test navigateur, la première fois : `npx playwright install chromium-headless-shell`.
 
 ```sh
 npm ci
 npm run dev      # serveur de développement
 npm test         # tests (tsx)
+npm run test:e2e # test de fumée dans Chromium headless, sur le build (lancer npm run build avant)
 npm run build    # tsc + vite build + liste de précache du service worker
 ```
 
