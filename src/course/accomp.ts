@@ -173,4 +173,4 @@ export function improvDrill(level: number): Q[] {
   return [improvQ("Blues en Do", ["C7", "F7", "C7", "G7"], BLUES_C, "Gamme blues de Do", 84, 3)];
 }
 
-export const ACCOMP_UNIT: Unit = { id: "uacc", title: "Accompagner une chanson", sub: "Grilles d'accords, main gauche pop", icon: "🎤", color: "#f472b6", lessons: [symbols, pop, patterns, melody, keys, improv] };
+export const ACCOMP_UNIT: Unit = { id: "uacc", title: "Accompagner une chanson", sub: "Grilles d'accords, main gauche pop", icon: "mic", color: "#f472b6", lessons: [symbols, pop, patterns, melody, keys, improv] };

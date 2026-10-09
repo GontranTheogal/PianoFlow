@@ -57,7 +57,7 @@ const pedalMusic = L("upd-l4", "La pédale dans un morceau", ["Savoir où change
   pedalQ("Basse et accord, quatre harmonies : Do – Sol – La mineur – Fa", withBass([0, 4, 5, 3]), "Change sur chaque basse."),
 ]);
 
-export const PEDAL_UNIT: Unit = { id: "upd", title: "La pédale de sustain", sub: "Ce qu'elle fait, le geste haut-bas", icon: "🦶", color: "#4ade80", lessons: [pedalWhat, pedalChange, pedalFlow, pedalMusic] };
+export const PEDAL_UNIT: Unit = { id: "upd", title: "La pédale de sustain", sub: "Ce qu'elle fait, le geste haut-bas", icon: "footprints", color: "#4ade80", lessons: [pedalWhat, pedalChange, pedalFlow, pedalMusic] };
 
 /** Exercices de pédale : 1 = un ou deux accords, 2 = enchaînements de quatre accords, 3 = basse + accord, quatre harmonies. */
 export const PEDAL_LEVELS = ["Un, puis deux accords", "Quatre accords", "Basse + accord"];
@@ -131,13 +131,13 @@ const fingerThumb = L("udg-l3", "Plus de cinq notes : le pouce", ["Placer le pas
   ...thumbQs(rng), ...thumbQs(rng), ...thumbQs(rng),
 ]);
 const fingerWrite = L("udg-l4", "Tes doigtés dans tes partitions", ["Préparer le doigté d'une partition importée"], (rng) => [
-  info("Dans l'appli", "Sur une partition sans doigtés, l'appli en calcule pour ta main (Réglages → Ma main). Mais le mieux est de vérifier et d'écrire les tiens : en jeu, le bouton ✍️ permet de toucher une note et d'imposer un doigt — le reste du passage se recalcule autour, et ta correction est gardée et synchronisée. Méthode : lis la phrase, choisis la position, écris seulement les doigts aux changements de position (comme sur les partitions imprimées), puis joue lentement en gardant TOUJOURS ce doigté.", undefined),
+  info("Dans l'appli", "Sur une partition sans doigtés, l'appli en calcule pour ta main (Réglages → Ma main). Mais le mieux est de vérifier et d'écrire les tiens : en jeu, le bouton « Corriger les doigtés » (menu ⋯) permet de toucher une note et d'imposer un doigt — le reste du passage se recalcule autour, et ta correction est gardée et synchronisée. Méthode : lis la phrase, choisis la position, écris seulement les doigts aux changements de position (comme sur les partitions imprimées), puis joue lentement en gardant TOUJOURS ce doigté.", undefined),
   mc(rng, "Sur une partition imprimée, quels doigts écrit-on ?", "seulement ceux des changements de position", ["tous", "aucun"], "Le reste découle de la position : on n'écrit que ce qui change."),
   mc(rng, "Tu bloques toujours au même endroit d'un morceau. Premier réflexe :", "vérifier le doigté de ce passage", ["jouer plus vite", "sauter ce passage"], "La plupart des accrocs viennent d'un doigté qui oblige la main à sauter."),
   ...positionQs(rng, "L"),
 ]);
 
-export const FINGER_UNIT: Unit = { id: "udg", title: "Trouver ses doigtés", sub: "Jouer quand rien n'est écrit", icon: "🖐️", color: "#fbbf24", lessons: [fingerHow, fingerPos, fingerThumb, fingerWrite] };
+export const FINGER_UNIT: Unit = { id: "udg", title: "Trouver ses doigtés", sub: "Jouer quand rien n'est écrit", icon: "hand", color: "#fbbf24", lessons: [fingerHow, fingerPos, fingerThumb, fingerWrite] };
 
 export const FINGER_LEVELS = ["Position de cinq doigts", "Passages du pouce"];
 export function fingerDrill(level: number, rng: Rng = Math.random): Q[] {

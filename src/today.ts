@@ -13,6 +13,7 @@ import * as Skills from "./skills";
 import { dayNum } from "./review";
 import { dueLessons } from "./recall";
 import { esc } from "./html";
+import { icon, iconOrText } from "./icons";
 import { readStr, writeStr } from "./storage";
 
 export interface TodayHost { go(action: string): void; }
@@ -44,7 +45,7 @@ const COURSE_FILES = new Set(REPERTOIRE.filter((r) => r.level === 0).map(repFile
 /** Séance finie et encore du temps : la leçon suivante du parcours, en bonus. */
 function moreItems(p: ReturnType<typeof loadProgress>): Pick<PlanItem, "icon" | "title" | "detail" | "min" | "action">[] {
   const cur = currentIndex(p, LESSONS.map((l) => l.id)), next = LESSONS[cur];
-  return next ? [{ icon: "➕", title: `Encore du temps ? Leçon : ${next.title}`, detail: `${next.unit.title} · leçon ${next.inUnit + 1}/${next.unit.lessons.length}`, min: 8, action: `lesson:${next.id}` }] : [];
+  return next ? [{ icon: "plus", title: `Encore du temps ? Leçon : ${next.title}`, detail: `${next.unit.title} · leçon ${next.inUnit + 1}/${next.unit.lessons.length}`, min: 8, action: `lesson:${next.id}` }] : [];
 }
 
 const skillTag = (key: string) => (key === "reading" || key === "sight" ? key : `drill:${key}`);
@@ -59,12 +60,12 @@ const SKILL_TEXT: Record<string, (lv: number) => string> = {
   fingers: (lv) => `Trouver la position de la main et les passages du pouce (niveau ${lv}).`,
   improv: (lv) => `Inventer une mélodie sur la grille, niveau ${lv}.`,
 };
-const SKILL_ICON: Record<string, string> = { reading: "🎼", sight: "👀", rhythm: "🥁", echo: "👂", intervals: "👂", chords: "👂", pedal: "🦶", fingers: "🖐️", improv: "🎷" };
+const SKILL_ICON: Record<string, string> = { reading: "music-4", sight: "eye", rhythm: "drum", echo: "ear", intervals: "ear", chords: "ear", pedal: "footprints", fingers: "hand", improv: "music-2" };
 /** Une compétence dans la séance : ce qu'on fait, et pourquoi elle est là (sa maîtrise). */
 function skillItem(st: Skills.SkillState, i: number): PlanItem {
   const k = st.skill.key, why = st.level === null ? "Pas encore travaillé : on commence."
     : `Maîtrise ${st.level} %${st.days >= 7 ? `, pas travaillé depuis ${st.days} jours` : ""} : ${st.level < 80 ? "un de tes points faibles en ce moment." : "on l'entretient."}`;
-  return { icon: SKILL_ICON[k] ?? "🎯", title: st.skill.label, detail: `${SKILL_TEXT[k]?.(exerciseLevel(k)) ?? ""} ${why}`.trim(), min: k === "reading" || k === "sight" ? 4 : 3, action: `ex:${k}`, tag: skillTag(k), key: `skill${i}` };
+  return { icon: SKILL_ICON[k] ?? "target", title: st.skill.label, detail: `${SKILL_TEXT[k]?.(exerciseLevel(k)) ?? ""} ${why}`.trim(), min: k === "reading" || k === "sight" ? 4 : 3, action: `ex:${k}`, tag: skillTag(k), key: `skill${i}` };
 }
 
 /** Nouvelles leçons par jour, au plus : au-delà, on apprend plus vite qu'on ne retient. Le reste du temps sert à fixer
@@ -78,22 +79,22 @@ function pieceItem(p: ReturnType<typeof loadProgress>): PlanItem | null {
   const mastered = (r: (typeof REPERTOIRE)[number]) => (stats[repFileName(r)]?.bestRhythm ?? 0) >= 90;
   if (learning) {
     const r = REPERTOIRE.find((x) => repFileName(x) === learning.name);
-    return { icon: "🎵", title: `Morceau : ${r ? r.title : learning.name.replace(/\.(musicxml|mxl|xml)$/i, "")}`, detail: `Coach à ${learning.pct} % : continue là où tu en étais.`, min: 8, action: r ? `rep:${r.id}` : `lib:${learning.name}`, tag: "piece" };
+    return { icon: "music", title: `Morceau : ${r ? r.title : learning.name.replace(/\.(musicxml|mxl|xml)$/i, "")}`, detail: `Coach à ${learning.pct} % : continue là où tu en étais.`, min: 8, action: r ? `rep:${r.id}` : `lib:${learning.name}`, tag: "piece" };
   }
   if (lv > 0) {
     for (let l = lv; l >= 1; l--) {
       const next = REPERTOIRE.find((r) => r.level === l && !r.song && !mastered(r));
-      if (next) return { icon: "🎵", title: `Morceau : ${next.title}`, detail: `${l === lv ? "À ton niveau" : `Niveau ${l}`} : ${next.tip}`, min: 8, action: `rep:${next.id}`, tag: "piece" };
+      if (next) return { icon: "music", title: `Morceau : ${next.title}`, detail: `${l === lv ? "À ton niveau" : `Niveau ${l}`} : ${next.tip}`, min: 8, action: `rep:${next.id}`, tag: "piece" };
     }
     const song = SONGS.find((r) => !mastered(r));
-    return song ? { icon: "🎵", title: `Morceau : ${song.title}`, detail: song.tip, min: 8, action: `rep:${song.id}`, tag: "piece" } : null;
+    return song ? { icon: "music", title: `Morceau : ${song.title}`, detail: song.tip, min: 8, action: `rep:${song.id}`, tag: "piece" } : null;
   }
   if (!unitDone(p, "u2")) return null;
   // débutant : les petits morceaux du parcours (le coach commence par la main droite seule), puis les chansons à accompagner
   const ok = (id: string) => mastered(REPERTOIRE.find((r) => r.id === id)!);
   const ids = unitDone(p, "u3") ? ["twinkle", "ode", "s-frere", "s-clair", "s-twinkle"] : ["twinkle", "ode"];
   const id = ids.find((x) => !ok(x)), next = id && REPERTOIRE.find((r) => r.id === id);
-  return next ? { icon: "🎵", title: `Morceau : ${next.title}`, detail: unitDone(p, "u3") ? next.tip : "Avec le coach : commence par la main droite seule, la gauche viendra après l'unité « Main gauche ».", min: 8, action: `rep:${next.id}`, tag: "piece" } : null;
+  return next ? { icon: "music", title: `Morceau : ${next.title}`, detail: unitDone(p, "u3") ? next.tip : "Avec le coach : commence par la main droite seule, la gauche viendra après l'unité « Main gauche ».", min: 8, action: `rep:${next.id}`, tag: "piece" } : null;
 }
 
 /** La séance du jour : ce que ferait faire un professeur, dans son ordre. S'échauffer ; se rappeler ce qu'on a appris
@@ -111,20 +112,20 @@ export function buildPlan(minutes = goal(), date = dayKey()): PlanItem[] {
     const kid = last ? last.id.split("-")[2].replace("s", "♯").replace(/b$/, "♭") : "C";
     const ki = Math.max(0, MAJOR_KEYS.findIndex((k) => k.id === kid));
     items.push(unitDone(p, "u9")
-      ? { icon: "🔥", title: `Échauffement : gamme de ${nameOf(MAJOR_KEYS[ki])} majeur`, detail: "Deux octaves, mains ensemble, lentement et régulier.", min: 3, action: `scale:${ki}`, tag: "warmup" }
-      : { icon: "🔥", title: `Échauffement : cinq doigts en ${nameOf(MAJOR_KEYS[ki])}`, detail: unitDone(p, "u3") ? "Majeur puis mineur, mains ensemble : délie les doigts." : "Main droite seule pour l'instant (la gauche viendra avec l'unité « Main gauche »).", min: 3, action: `five:${ki}`, tag: "warmup" });
+      ? { icon: "flame", title: `Échauffement : gamme de ${nameOf(MAJOR_KEYS[ki])} majeur`, detail: "Deux octaves, mains ensemble, lentement et régulier.", min: 3, action: `scale:${ki}`, tag: "warmup" }
+      : { icon: "flame", title: `Échauffement : cinq doigts en ${nameOf(MAJOR_KEYS[ki])}`, detail: unitDone(p, "u3") ? "Majeur puis mineur, mains ensemble : délie les doigts." : "Main droite seule pour l'instant (la gauche viendra avec l'unité « Main gauche »).", min: 3, action: `five:${ki}`, tag: "warmup" });
   }
   // 2. révision express : quelques questions des leçons apprises il y a 1, 3, 7, 14… jours (faite aujourd'hui : elle reste, cochée)
   const due = dueLessons(p, today);
   if (due.length || doneTags.includes("recall")) {
     const names = due.slice(0, 2).map((l) => `« ${l.title} »`).join(", ") + (due.length > 2 ? "…" : "");
-    items.push({ icon: "🧠", title: "Révision express", detail: due.length ? `${due.length * 2} questions sur ${names} : se rappeler ce qu'on a appris, c'est ce qui le fixe.` : "Faite : ce qui est bien retenu reviendra plus tard.", min: 4, action: "recall:today", tag: "recall", key: "recall" });
+    items.push({ icon: "brain", title: "Révision express", detail: due.length ? `${due.length * 2} questions sur ${names} : se rappeler ce qu'on a appris, c'est ce qui le fixe.` : "Faite : ce qui est bien retenu reviendra plus tard.", min: 4, action: "recall:today", tag: "recall", key: "recall" });
   }
   // 3. la nouveauté : une ou deux leçons du parcours (ou des révisions de leçons quand tout est fini). Celles déjà faites
   //    aujourd'hui restent affichées (cochées) : la liste ne change pas sous les yeux une fois l'étape accomplie.
   const doneToday = doneTags.filter((t) => t.startsWith("lesson:")).map((t) => t.slice(7));
   const first = LESSONS.find((l) => l.id === doneToday[0]) ?? (cur < LESSONS.length ? LESSONS[cur] : undefined);
-  const lessonItem = (l: (typeof LESSONS)[number], tag: string, key: string): PlanItem => ({ icon: "🗺️", title: `Leçon : ${l.title}`, detail: `Nouveau · ${l.unit.title}, leçon ${l.inUnit + 1}/${l.unit.lessons.length}`, min: 8, action: `lesson:${l.id}`, tag, key });
+  const lessonItem = (l: (typeof LESSONS)[number], tag: string, key: string): PlanItem => ({ icon: "map", title: `Leçon : ${l.title}`, detail: `Nouveau · ${l.unit.title}, leçon ${l.inUnit + 1}/${l.unit.lessons.length}`, min: 8, action: `lesson:${l.id}`, tag, key });
   if (first) {
     lessonCap = newLessonsMax(minutes);
     items.push(lessonItem(first, "lesson", "lesson"));
@@ -139,7 +140,7 @@ export function buildPlan(minutes = goal(), date = dayKey()): PlanItem[] {
     const d = (l: (typeof LESSONS)[number]) => p.done[l.id];
     const byNeed = [...LESSONS].sort((a, b) => (d(a)?.stars ?? 0) - (d(b)?.stars ?? 0) || (d(a)?.at ?? 0) - (d(b)?.at ?? 0));
     const revs = [...doneToday.map((id) => LESSONS.find((l) => l.id === id)!).filter(Boolean), ...byNeed.filter((l) => !doneToday.includes(l.id))];
-    const revItem = (l: (typeof LESSONS)[number], tag: string, key: string): PlanItem => ({ icon: "🔁", title: `Révision : ${l.title}`, detail: "Le parcours est fini : on consolide.", min: 6, action: `lesson:${l.id}`, tag, key });
+    const revItem = (l: (typeof LESSONS)[number], tag: string, key: string): PlanItem => ({ icon: "repeat", title: `Révision : ${l.title}`, detail: "Le parcours est fini : on consolide.", min: 6, action: `lesson:${l.id}`, tag, key });
     items.push(revItem(revs[0], "lesson", "lesson"));
     moreLessons = revs.slice(1).map((l, i) => revItem(l, `lesson:${l.id}`, `lesson+${i}`));
   }
@@ -149,7 +150,7 @@ export function buildPlan(minutes = goal(), date = dayKey()): PlanItem[] {
   const errs = dueReviews();
   if (errs.length) {
     const r0 = errs[0];
-    items.push({ icon: "🔁", title: `Révision : ${r0.label}`, detail: errs.length > 1 ? `${errs.length} choses à revoir aujourd'hui ; on commence par celle qui résiste le plus.` : "Ratée récemment : elle revient pour être fixée (puis dans 3, 7 et 14 jours).", min: 4, action: r0.action, tag: "review" });
+    items.push({ icon: "repeat", title: `Révision : ${r0.label}`, detail: errs.length > 1 ? `${errs.length} choses à revoir aujourd'hui ; on commence par celle qui résiste le plus.` : "Ratée récemment : elle revient pour être fixée (puis dans 3, 7 et 14 jours).", min: 4, action: r0.action, tag: "review" });
   }
   // 6. les compétences les plus faibles (ou pas encore travaillées), une par famille : lecture, rythme, oreille, pédale…
   //    La maîtrise retenue est celle du début de journée : la séance ne change pas une fois l'étape faite.
@@ -204,7 +205,7 @@ function skillsCard(p: ReturnType<typeof loadProgress>): string {
   const color = (v: number) => (v >= 85 ? "#22c55e" : v >= 60 ? "#93c5fd" : "#f59e0b");
   const fams = Object.entries(Skills.FAMILIES).filter(([f]) => st.some((x) => x.skill.family === f));
   return `<h2 class="td-h2">Tes compétences</h2>
-    <div class="td-card"><div class="td-skills">${fams.map(([f, info]) => `<p class="td-skfam">${info.icon} ${esc(info.label)}</p>${st.filter((x) => x.skill.family === f).map((x) =>
+    <div class="td-card"><div class="td-skills">${fams.map(([f, info]) => `<p class="td-skfam">${iconOrText(info.icon, esc)} ${esc(info.label)}</p>${st.filter((x) => x.skill.family === f).map((x) =>
       `<div class="td-sk"><span>${esc(x.skill.label)}</span><small>${x.level === null ? "pas encore travaillé" : `${x.level} %`}</small><span class="bar"><i style="width:${x.level ?? 0}%;background:${color(x.level ?? 0)}"></i></span></div>`).join("")}`).join("")}</div>
       <small>La maîtrise suit tes derniers résultats et baisse doucement sans pratique. La séance du jour te fait travailler les plus faibles.</small></div>`;
 }
@@ -233,9 +234,9 @@ function weekCard(p: ReturnType<typeof loadProgress>): string {
         <div><b>${lessons}</b><small>leçon${lessons > 1 ? "s" : ""} réussie${lessons > 1 ? "s" : ""}</small></div>
         <div><b>${pieces.length}</b><small>morceau${pieces.length > 1 ? "x" : ""} travaillé${pieces.length > 1 ? "s" : ""} avec le coach</small></div>
         <div><b>${rev}</b><small>point${rev > 1 ? "s" : ""} en révision</small></div></div>
-      ${pieces.length ? `<p>🎵 ${pieces.slice(0, 4).map(esc).join(", ")}</p>` : ""}
-      ${tendency ? `<p>🥁 En rythme, ${esc(tendency)}.</p>` : ""}
-      <p>🎯 <b>Objectif de la semaine :</b> ${esc(goalTxt)}</p>
+      ${pieces.length ? `<p>${icon("music")} ${pieces.slice(0, 4).map(esc).join(", ")}</p>` : ""}
+      ${tendency ? `<p>${icon("drum")} En rythme, ${esc(tendency)}.</p>` : ""}
+      <p>${icon("target")} <b>Objectif de la semaine :</b> ${esc(goalTxt)}</p>
     </div>`;
 }
 
@@ -246,10 +247,10 @@ const welcomed = () => { try { return !!localStorage.getItem(WELCOME_KEY); } cat
 /** Premier lancement : trois questions, pas plus (clavier, temps par jour, débutant ou pas). */
 function welcomeHtml(g: number): string {
   return `<div class="td-wrap td-narrow"><div class="td-welcome">
-    <h1>Bienvenue 🎹</h1>
+    <h1>Bienvenue ${icon("piano")}</h1>
     <p>PianoFlow te fait apprendre le piano par petites séances, avec ton clavier MIDI.</p>
     <ol class="td-steps">
-      <li><b>Branche ton clavier</b><small>en USB ou en Bluetooth. La pastille 🎹 en haut passe au vert quand il est reconnu.</small></li>
+      <li><b>Branche ton clavier</b><small>en USB ou en Bluetooth. La pastille ${icon("piano")} en haut passe au vert quand il est reconnu.</small></li>
       <li><b>Combien de temps par jour ?</b><small>Tu pourras changer plus tard. Mieux vaut peu chaque jour que beaucoup une fois par semaine.</small>
         <span class="td-goals">${[10, 20, 30, 45].map((m) => `<button data-act="td:goal:${m}" class="${m === g ? "on" : ""}">${m} min</button>`).join("")}</span></li>
       <li><b>Où en es-tu ?</b>
@@ -271,12 +272,12 @@ function progressHtml(p: ReturnType<typeof loadProgress>, g: number): string {
         <div><b>${doneN}/${LESSONS.length}</b><small>leçons du parcours</small></div>
         <div><b>${mastered}/${REPERTOIRE.filter((r) => r.level >= 1).length}</b><small>morceaux maîtrisés (≥ 90 % en rythme)</small></div>
         <div><b>${repLevel(p) || "–"}</b><small>niveau de répertoire</small></div>
-        <div><b>⚡ ${p.xp}</b><small>XP</small></div>
+        <div><b>${icon("zap")} ${p.xp}</b><small>XP</small></div>
       </div>
     </div>
     ${skillsCard(p)}
     ${weekCard(p)}
-    <div class="td-tip">💡 ${esc(tip)}</div>
+    <div class="td-tip">${icon("lightbulb")} ${esc(tip)}</div>
   </div>`;
 }
 
@@ -285,7 +286,7 @@ const isLessonItem = (x: PlanItem) => !!x.key?.startsWith("lesson");
 
 /** Ce que contient la séance, en mots : on voit d'un coup qu'elle n'est pas « les leçons dans l'ordre ». */
 function kinds(plan: PlanItem[]): string {
-  const k = (x: PlanItem) => x.tag === "warmup" ? "échauffement" : x.tag === "recall" || x.tag === "review" || x.icon === "🔁" ? "révision"
+  const k = (x: PlanItem) => x.tag === "warmup" ? "échauffement" : x.tag === "recall" || x.tag === "review" || x.icon === "repeat" ? "révision"
     : x.key?.startsWith("lesson") ? "nouveauté" : x.tag === "piece" ? "morceau" : "exercices ciblés";
   const list = [...new Set(plan.map(k))];
   return list.length > 1 ? ` : ${list.join(", ")}` : "";
@@ -303,14 +304,14 @@ export function openToday() {
   const hour = new Date().getHours();
   const more = !next && plan.length ? moreItems(p) : [];
   const row = (x: Pick<PlanItem, "icon" | "title" | "detail" | "min" | "action">, i: number, cls: string, n: string) => `<button class="td-item ${cls}" data-act="${esc(x.action)}">
-        <span class="td-n">${n}</span><span class="td-ic">${x.icon}</span><span class="td-txt"><b>${esc(x.title)}</b>${cls.includes("done") ? "" : `<small>${esc(x.detail)}</small>`}</span><span class="td-min">${x.min} min</span></button>`;
+        <span class="td-n">${n}</span><span class="td-ic">${iconOrText(x.icon, esc)}</span><span class="td-txt"><b>${esc(x.title)}</b>${cls.includes("done") ? "" : `<small>${esc(x.detail)}</small>`}</span><span class="td-min">${x.min} min</span></button>`;
   root.innerHTML = `<div class="td-wrap">
     <div class="td-head"><h1>${hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir"}</h1>
       <p>${!next && plan.length ? "Séance terminée, bravo ! Tu peux t'arrêter là, ou continuer avec la leçon suivante." : planDone ? `Encore ${plan.length - planDone} étape${plan.length - planDone > 1 ? "s" : ""}, environ ${left} minutes.` : `Ta séance : ${plan.length} étape${plan.length > 1 ? "s" : ""}, environ ${total} minutes, dans l'ordre${kinds(plan)}. Les exercices sont choisis pour toi d'après tes résultats : rien d'autre à décider. L'onglet Exercices ne sert qu'à en faire plus.`}</p></div>
     <div class="td-top">
       <div class="td-plan">
         ${plan.map((x, i) => x === next
-          ? `<button class="td-go" data-act="${esc(x.action)}"><small>${planDone ? `Étape ${i + 1} · à toi` : "Pour commencer"} · ${x.min} min</small><b>${x.icon} ${esc(x.title)}</b><em>${esc(x.detail)}</em><span>${planDone ? "Continuer" : "Commencer"} →</span></button>`
+          ? `<button class="td-go" data-act="${esc(x.action)}"><small>${planDone ? `Étape ${i + 1} · à toi` : "Pour commencer"} · ${x.min} min</small><b>${iconOrText(x.icon, esc)} ${esc(x.title)}</b><em>${esc(x.detail)}</em><span>${planDone ? "Continuer" : "Commencer"} →</span></button>`
           : row(x, i, isDoneItem(x) ? "done" : "", isDoneItem(x) ? "✓" : String(i + 1))).join("")}
         ${plan.length ? "" : `<p class="td-empty">Commence par la première leçon du parcours.</p>`}
         ${more.map((x) => row(x, 0, "td-more", "+")).join("")}
@@ -320,7 +321,7 @@ export function openToday() {
         <div class="td-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" class="bg"/>${mins > 0 ? `<circle cx="60" cy="60" r="50" class="fg" pathLength="100" style="stroke-dasharray:${Math.min(100, Math.round((mins / g) * 100))} 100"/>` : ""}</svg>
           <div><b>${mins}</b><small>/ ${g} min</small></div></div>
         <label class="td-goal">Objectif <select id="tdGoal">${[10, 20, 30, 45].map((m) => `<option value="${m}" ${m === g ? "selected" : ""}>${m} min / jour</option>`).join("")}</select></label>
-        <div class="td-stats"><div><b>🔥 ${st}</b><small>jour${st > 1 ? "s" : ""} d'affilée</small></div></div>
+        <div class="td-stats"><div><b>${icon("flame")} ${st}</b><small>jour${st > 1 ? "s" : ""} d'affilée</small></div></div>
         <button class="td-link" data-act="td:progress">Voir tes progrès →</button>
       </div>
     </div>

@@ -82,7 +82,7 @@ function minorUnit(key: KeyDef, color: string): Unit {
   const relMajor = [...MAJOR_KEYS].find((k) => k.fifths === key.fifths)!;
   const leading = pieceNotes({ ...har, direction: "up" }, "R").pitches[6];
   return {
-    id: `uk-${id}`, title: name, sub: "la couleur sombre", icon: "🌙", color, lessons: [
+    id: `uk-${id}`, title: name, sub: "la couleur sombre", icon: "moon", color, lessons: [
       L(`k-${id}-1`, `La gamme de ${name} (naturelle)`, [`Connaître l'armure de ${name} et son ton relatif`, "Jouer la mineure naturelle"], (rng) => [
         ...(key.id === "A" ? [info("Majeur, mineur : deux humeurs", "Joue les touches blanches de La à La : ce sont les notes de Do majeur, mais la « maison » est maintenant La. Tout l'équilibre change : la tierce au-dessus de la tonique devient petite (3 demi-tons) et la gamme sonne sombre, mélancolique. C'est le mode MINEUR.\n\nSur la partition, une tonalité se reconnaît aux dièses ou bémols écrits une fois pour toutes au début de chaque ligne, juste après la clé : l'ARMURE. Ils valent pour tout le morceau. Do majeur n'en a aucun, La mineur non plus : ils ont la même armure. Tu verras des armures avec des dièses dès Sol majeur.\n\nBeaucoup de morceaux célèbres sont en mineur (la Lettre à Élise, Greensleeves, la Sonate « Clair de lune ») ; et beaucoup de chansons passent d'une humeur à l'autre. Chaque tonalité majeure a ainsi une sœur mineure, avec la même armure : son « ton relatif ».", undefined)] : []),
         info(`${name}, ton relatif de ${keyLabel(relMajor)}`, `${armureText(key.fifths)}. ${name} et ${keyLabel(relMajor)} partagent exactement la même armure : on dit qu'ils sont « relatifs ». La gamme mineure naturelle suit la recette Ton ½ Ton Ton ½ Ton Ton (sa tierce est plus petite : 3 demi-tons, d'où sa couleur sombre).`,
@@ -125,7 +125,7 @@ const pieceProg = (key: KeyDef, steps: Step[], goal: string, o: { lead?: boolean
   return { k: "piece", title: p.title, goal, xml: p.xml, pass: 70, hands: "both" };
 };
 const sevenths: Unit = {
-  id: "uk-7", title: "Septièmes et cadences", sub: "Les accords qui racontent une histoire", icon: "🎷", color: "#c084fc", lessons: [
+  id: "uk-7", title: "Septièmes et cadences", sub: "Les accords qui racontent une histoire", icon: "music-2", color: "#c084fc", lessons: [
     L("k-7-1", "L'accord de septième de dominante", ["Construire et jouer V7", "Enchaîner I – IV – V7 – I"], (rng) => [
       info("Ajouter une quatrième note", "En ajoutant une tierce au-dessus d'une triade, on obtient un accord de septième. Sur le Ve degré, ça donne le V7 (septième de dominante) : Sol – Si – Ré – Fa. Il crée une tension qui réclame le retour à la tonique.", undefined),
       mc(rng, "Un accord de septième compte combien de notes ?", "4", ["3", "5"], "Une triade (3 notes) + une tierce : 4 notes."),
@@ -187,6 +187,6 @@ function tourLesson(key: KeyDef): Lesson {
     ];
   });
 }
-const TOUR_UNIT: Unit = { id: "uk-tour", title: "Le tour des tonalités", sub: "De 3 à 6 dièses ou bémols", icon: "🧭", color: "#2dd4bf", lessons: ORDER.slice(9).map(tourLesson) };
+const TOUR_UNIT: Unit = { id: "uk-tour", title: "Le tour des tonalités", sub: "De 3 à 6 dièses ou bémols", icon: "compass", color: "#2dd4bf", lessons: ORDER.slice(9).map(tourLesson) };
 export const KEYS_AND_SEVENTHS: Unit[] = [...KEY_UNITS, sevenths, TOUR_UNIT];
 void [P, M, ROMAN];

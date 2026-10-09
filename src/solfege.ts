@@ -4,6 +4,7 @@ import { MiniKeyboard } from "./miniKeyboard";
 import { markDone } from "./daily";
 import { record as recordSkill } from "./skills";
 import { esc } from "./html";
+import { icon } from "./icons";
 import { readJson, writeJson } from "./storage";
 
 /** Mode solfège : apprendre la clé de Sol et la clé de Fa, avec ou sans piano.
@@ -86,8 +87,8 @@ function renderExercise() {
       <div class="sf-stage big ${grand() ? "gf" : ""}"><div class="sf-host"><span class="sf-loading">Chargement…</span></div></div>
       <div class="sf-prompt" id="sfPrompt">${prefs.input === "piano" ? "Joue la note surlignée" : "Quelle est la note surlignée ?"}</div>
       <div class="sf-fb" id="sfFb"></div>${pad}
-      <div class="sf-actions"><button class="sf-btn" id="sfHint">💡 Indice</button>
-        ${prefs.run === "endless" && prefs.pace !== "wait" ? `<button class="sf-btn" id="sfPause">⏸ Pause</button>` : ""}
+      <div class="sf-actions"><button class="sf-btn" id="sfHint">${icon("lightbulb")} Indice</button>
+        ${prefs.run === "endless" && prefs.pace !== "wait" ? `<button class="sf-btn" id="sfPause">Pause</button>` : ""}
         ${prefs.run === "endless" ? `<button class="sf-btn pri" id="sfStop">■ Terminer</button>` : ""}</div></div>`;
   if (prefs.input === "piano") { const pitches = C.itemsFor(prefs.clef).map(C.midiOf); const [lo, hi] = pitchRange(pitches); kbd.setRange(lo, hi); }
   syncKeyboardBox();
@@ -159,7 +160,7 @@ function hud() {
   if (hudEl) hudEl.innerHTML = r.kind === "round"
     ? `Note <b>${Math.min(ROUND, r.counted + 1)}</b> / ${ROUND}`
     : `<b>${r.ok}</b>/${r.counted} · ${r.counted ? Math.round((r.ok / r.counted) * 100) : 100}% · record série <b>${r.best}</b>`;
-  if (st) st.textContent = r.streak >= 2 ? "🔥 " + r.streak : "";
+  if (st) st.textContent = r.streak >= 2 ? String(r.streak) : "";
   const bar = body.querySelector("#sfBar") as HTMLElement | null; if (bar) bar.style.width = (r.counted / ROUND) * 100 + "%";
 }
 
@@ -203,7 +204,7 @@ function hint() {
   r.hinted[r.cur] = true;
   const it = r.seq[r.cur], fb = body.querySelector("#sfFb") as HTMLElement;
   const near = it.clef === "G" ? "Repère : la clé de Sol entoure la 2e ligne (Sol)." : "Repère : les deux points de la clé de Fa entourent la 4e ligne (Fa).";
-  fb.className = "sf-fb hint"; fb.textContent = `💡 La note surlignée est ${C.describePos(it.pos)}${grand() ? ` (clé de ${it.clef === "G" ? "Sol" : "Fa"})` : ""}. ${near}`;
+  fb.className = "sf-fb hint"; fb.textContent = `La note surlignée est ${C.describePos(it.pos)}${grand() ? ` (clé de ${it.clef === "G" ? "Sol" : "Fa"})` : ""}. ${near}`;
 }
 function finishRun() {
   const r = run; if (!r) return;
@@ -216,11 +217,11 @@ function finishRun() {
   prog.levels[rk] = { best: Math.max(p.best, score), rounds: p.rounds + 1 }; C.saveProgress(prog);
   if (r.counted >= 5) { markDone("reading"); recordSkill("reading", pct); }
   const head = r.kind === "round"
-    ? `<div class="sf-stars">${pct >= 90 ? "⭐⭐⭐" : pct >= 70 ? "⭐⭐" : "⭐"}</div><h2>${pct}% de réussite</h2>`
+    ? `<div class="sf-stars">${pct >= 90 ? icon("star").repeat(3) : pct >= 70 ? icon("star").repeat(2) : icon("star")}</div><h2>${pct}% de réussite</h2>`
     : `<div class="sf-stars">∞</div><h2>${r.counted} notes lues</h2>`;
   const line = r.kind === "round"
-    ? `${r.ok} bonnes réponses du premier coup sur ${ROUND}${record ? " 🏆 nouveau record !" : ""} · temps moyen <b>${avg} s</b>.`
-    : `<b>${pct}%</b> de réussite · meilleure série <b>${r.best}</b>${record ? " 🏆 nouveau record !" : ""} · temps moyen <b>${avg} s</b> par bonne réponse.`;
+    ? `${r.ok} bonnes réponses du premier coup sur ${ROUND}${record ? ` ${icon("trophy")} nouveau record !` : ""} · temps moyen <b>${avg} s</b>.`
+    : `<b>${pct}%</b> de réussite · meilleure série <b>${r.best}</b>${record ? ` ${icon("trophy")} nouveau record !` : ""} · temps moyen <b>${avg} s</b> par bonne réponse.`;
   body.innerHTML = `<div class="sf-card sf-sum">${head}<p class="sf-text">${line}</p>
     ${weak.length ? `<p class="sf-text">À revoir : <b>${weak.map(esc).join(", ")}</b> (elles reviendront plus souvent).</p>` : ""}
     <div class="sf-actions"><button class="sf-btn pri" id="sfAgain">Rejouer</button></div></div>`;
@@ -268,7 +269,7 @@ export function initSolfege(rootEl: HTMLElement, h: SolfegeHost) {
     }
     const nb = t.closest("[data-n]") as HTMLElement | null; if (nb) { answerName(Number(nb.dataset.n)); return; }
     if (t.closest("#sfHint")) { hint(); return; }
-    if (t.closest("#sfPause")) { if (run) { run.paused = !run.paused; (t.closest("#sfPause") as HTMLElement).textContent = run.paused ? "▶ Reprendre" : "⏸ Pause"; } return; }
+    if (t.closest("#sfPause")) { if (run) { run.paused = !run.paused; (t.closest("#sfPause") as HTMLElement).textContent = run.paused ? "▶ Reprendre" : "Pause"; } return; }
     if (t.closest("#sfStop")) { finishRun(); return; }
     if (t.closest("#sfAgain")) { renderExercise(); return; }
   });

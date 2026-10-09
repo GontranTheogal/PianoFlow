@@ -12,6 +12,7 @@ import { record as recordSkill } from "../skills";
 import { dueLessons, recallQuestions, recordRecall, origin as recallOrigin } from "../recall";
 import type { Q, Show, Audio, Unit } from "./types";
 import { esc } from "../html";
+import { icon, iconOrText } from "../icons";
 import { readJson, writeJson } from "../storage";
 
 export interface CourseHost {
@@ -60,29 +61,29 @@ function renderPath() {
   root.innerHTML = `<div class="cs-path">
     <aside class="cs-side">
       <div class="cs-stats">
-        <div class="cs-stat" title="Jours d'affilée"><b>🔥 ${st}</b><small>série</small></div>
-        <div class="cs-stat"><b>⚡ ${prog.xp}</b><small>XP</small></div>
-        <div class="cs-stat"><b>⭐ ${stars}</b><small>étoiles</small></div>
+        <div class="cs-stat" title="Jours d'affilée"><b>${icon("flame")} ${st}</b><small>série</small></div>
+        <div class="cs-stat"><b>${icon("zap")} ${prog.xp}</b><small>XP</small></div>
+        <div class="cs-stat"><b>${icon("star")} ${stars}</b><small>étoiles</small></div>
       </div>
       <div class="cs-ovr"><div class="cs-ovr-bar"><i style="width:${(doneN / total) * 100}%"></i></div><small>${doneN} / ${total} leçons</small></div>
       <nav class="cs-toc">${UNITS.map((u) => {
         const ls = LESSONS.filter((l) => l.unit === u), d = ls.filter((l) => isDone(prog, l.id)).length, open = ls.some((l) => isUnlocked(prog, ids(), l.index, prefs.unlockAll));
-        return `<button data-unit="${u.id}" class="${d === ls.length ? "full" : ""} ${open ? "" : "lock"}"><span class="cs-ic" style="background:${u.color}">${esc(u.icon)}</span><span class="cs-tt">${esc(u.title)}</span><small>${d}/${ls.length}</small></button>`;
+        return `<button data-unit="${u.id}" class="${d === ls.length ? "full" : ""} ${open ? "" : "lock"}"><span class="cs-ic" style="--c:${u.color}">${iconOrText(u.icon, esc)}</span><span class="cs-tt">${esc(u.title)}</span><small>${d}/${ls.length}</small></button>`;
       }).join("")}</nav>
     </aside>
     <div class="cs-scroll" id="csScroll">
       ${cur < total ? `<div class="cs-resume"><div><small>${esc(next.unit.title)} · leçon ${next.inUnit + 1}</small><b>${esc(next.title)}</b></div><button class="sf-btn pri" data-start="${next.id}">${isDone(prog, next.id) ? "Refaire" : doneN === 0 ? "Commencer" : "Continuer"}</button></div>`
-        : `<div class="cs-resume"><div><small>Parcours terminé</small><b>Tu as fini toutes les leçons 🎉</b></div></div>`}
-      ${doneN === 0 ? `<p class="cs-tiptest">Tu as déjà joué du piano ? Chaque unité a un bouton <b>⏩ Je connais déjà</b> : un court test la valide d'un coup, avec toutes celles d'avant.</p>` : ""}
+        : `<div class="cs-resume"><div><small>Parcours terminé</small><b>Tu as fini toutes les leçons ${icon("party-popper")}</b></div></div>`}
+      ${doneN === 0 ? `<p class="cs-tiptest">Tu as déjà joué du piano ? Chaque unité a un bouton <b>${icon("fast-forward")} Je connais déjà</b> : un court test la valide d'un coup, avec toutes celles d'avant.</p>` : ""}
       ${UNITS.map((u) => {
         const ls = LESSONS.filter((l) => l.unit === u);
         const full = ls.every((l) => isDone(prog, l.id));
-        return `<section class="cs-unit" id="unit-${u.id}"><header style="--c:${u.color}"><span class="cs-uic">${esc(u.icon)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">⏩ Je connais déjà</button>`}</header>
+        return `<section class="cs-unit" id="unit-${u.id}"><header style="--c:${u.color}"><span class="cs-uic">${iconOrText(u.icon, esc)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">${icon("fast-forward")} Je connais déjà</button>`}</header>
           <div class="cs-nodes">${ls.map((l) => {
             const done = isDone(prog, l.id), unlocked = isUnlocked(prog, ids(), l.index, prefs.unlockAll), isCur = l.index === cur;
             const s = prog.done[l.id]?.stars ?? 0, shift = NODE_SHIFT[l.inUnit % NODE_SHIFT.length];
             return `<div class="cs-row" style="transform:translateX(${shift}px)"><button class="cs-node ${done ? "done" : unlocked ? "open" : "lock"} ${isCur ? "cur" : ""}" style="--c:${u.color}" data-lesson="${l.id}" aria-label="${esc(l.title)}">
-              ${isCur ? `<span class="cs-go">GO</span>` : ""}<span class="cs-n">${done ? "✓" : unlocked ? l.inUnit + 1 : "🔒"}</span></button>
+              ${isCur ? `<span class="cs-go">GO</span>` : ""}<span class="cs-n">${done ? "✓" : unlocked ? l.inUnit + 1 : icon("lock")}</span></button>
               <div class="cs-lt"><b>${esc(l.title)}</b>${done ? `<span class="cs-st">${"★".repeat(s)}${"☆".repeat(3 - s)}</span>` : ""}</div></div>`;
           }).join("")}</div></section>`;
       }).join("")}
@@ -104,7 +105,7 @@ function openSheet(l: FlatLesson) {
     <ul>${l.goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>
     ${d ? `<p class="cs-best">${"★".repeat(d.stars)}${"☆".repeat(3 - d.stars)} · meilleur score ${d.best} %</p>` : ""}
     ${unlocked ? `<button class="sf-btn pri" data-start="${l.id}">${d ? "Refaire la leçon" : "Commencer"}</button>`
-      : `<p class="cs-lockmsg">🔒 Termine d'abord « ${esc(prev?.title ?? "")} » pour ouvrir celle-ci. (Tu peux aussi activer le mode libre.)</p>`}</div>`;
+      : `<p class="cs-lockmsg">${icon("lock")} Termine d'abord « ${esc(prev?.title ?? "")} » pour ouvrir celle-ci. (Tu peux aussi activer le mode libre.)</p>`}</div>`;
   sheet.classList.remove("hidden");
 }
 
@@ -144,7 +145,7 @@ function finishTest(r: Run, accuracy: number) {
   }
   const first = LESSONS.find((l) => l.unit === u && !isDone(prog, l.id));
   root.innerHTML = `<div class="cs-lesson cs-done" style="--c:${u.color}"><div class="cs-sum">
-    <div class="cs-pic">${ok ? "🎉" : "💪"}</div>
+    <div class="cs-pic">${ok ? icon("party-popper") : icon("biceps-flexed")}</div>
     <h2>${ok ? "Unité validée !" : "Pas encore"}</h2>
     <p class="cs-small">${ok ? `${accuracy} % du premier coup : ${added} leçon${added > 1 ? "s" : ""} validée${added > 1 ? "s" : ""}. On continue à partir de la suite.` : `${accuracy} % du premier coup (il en faut ${TEST_PASS}). Les leçons de cette unité vont te remettre à niveau rapidement.`}</p>
     <div class="cs-sumbtns">${!ok && first ? `<button class="sf-btn pri" data-start="${first.id}">Commencer : ${esc(first.title)}</button>` : ""}<button class="sf-btn ${ok ? "pri" : ""}" data-leave>Retour au parcours</button></div></div></div>`;
@@ -214,22 +215,22 @@ function stageHtml(q: Q): string {
       return `<h2 class="cs-prompt">${esc(q.prompt)}</h2>${audioBtn(q)}<div class="cs-staff" id="csStaff"></div>${q.k === "seq" && q.hidden ? `<div class="cs-dots">${q.notes.map(() => "<i></i>").join("")}</div>` : ""}<div class="cs-hint" id="csHint"></div>`;
     case "choice": return `<h2 class="cs-prompt">${esc(q.prompt)}</h2>${audioBtn(q)}<div class="cs-staff" id="csStaff"></div><div class="cs-opts">${q.options.map((o, i) => `<button class="cs-opt" data-opt="${i}">${esc(o)}</button>`).join("")}</div>`;
     case "touch": case "pedal":
-      return `<h2 class="cs-prompt">${esc(q.prompt)}</h2><div class="cs-staff" id="csStaff"></div>${q.k === "pedal" ? `<div class="cs-pedal" id="csPedal">🦶 pédale en haut</div>` : ""}<div class="cs-hint" id="csHint">${q.k === "pedal" ? "Il faut un clavier MIDI avec une pédale de sustain branchée." : "Il faut un clavier MIDI : l'appli mesure la force et la durée de chaque note."}</div>`;
+      return `<h2 class="cs-prompt">${esc(q.prompt)}</h2><div class="cs-staff" id="csStaff"></div>${q.k === "pedal" ? `<div class="cs-pedal" id="csPedal">pédale en haut</div>` : ""}<div class="cs-hint" id="csHint">${q.k === "pedal" ? "Il faut un clavier MIDI avec une pédale de sustain branchée." : "Il faut un clavier MIDI : l'appli mesure la force et la durée de chaque note."}</div>`;
     case "improv": return `<h2 class="cs-prompt">${esc(q.prompt)}</h2><div class="cs-imp"><div class="cs-imp-chord" id="csImp">${esc(q.names.join(" – "))}</div><small>${esc(q.scaleName)} : les touches allumées sur le clavier. ${q.rounds} tours de la grille.</small></div>
       <div class="cs-hint" id="csHint">${esc(q.hint ?? "L'appli joue les accords ; toi, joue ce que tu veux avec les notes allumées : des notes longues, des répétitions, des petites phrases. Pas de fausse note possible !")}</div>
       <div class="cs-rctl"><button class="sf-btn pri" data-improv>▶ Lancer l'accompagnement</button></div>`;
     case "rhythm": return `<h2 class="cs-prompt">${esc(q.prompt)}</h2><div class="cs-staff cs-rstaff" id="csStaff"></div><div class="cs-hint" id="csHint">${esc(q.hint ?? "Quatre clics de préparation, puis tape sur chaque note (n'importe quelle touche, la barre espace, ou ce bouton).")}</div>
-      <div class="cs-rctl"><button class="sf-btn" data-rlisten>▶ Écouter</button><button class="sf-btn pri" data-rstart>🥁 Commencer</button></div><button class="cs-tap" id="csTap" data-tap>TAPE</button>`;
-    case "piece": return `<div class="cs-piece"><div class="cs-pic">🎹</div><h2>${esc(q.title)}</h2><p>${esc(q.goal)}</p><p class="cs-small">Objectif : ${q.pass} % ${q.mode === "rhythm" ? `en mode « En rythme », mains ensemble, à ${q.speed ?? 70} % de la vitesse au moins` : "de justesse en « Pas à pas »"}. L'exercice s'ouvre dans l'entraînement (partition, notes qui tombent, mains séparées) ; travaille-le comme tu veux, puis fais un passage validant.</p>
+      <div class="cs-rctl"><button class="sf-btn" data-rlisten>▶ Écouter</button><button class="sf-btn pri" data-rstart>${icon("drum")} Commencer</button></div><button class="cs-tap" id="csTap" data-tap>TAPE</button>`;
+    case "piece": return `<div class="cs-piece"><div class="cs-pic">${icon("piano")}</div><h2>${esc(q.title)}</h2><p>${esc(q.goal)}</p><p class="cs-small">Objectif : ${q.pass} % ${q.mode === "rhythm" ? `en mode « En rythme », mains ensemble, à ${q.speed ?? 70} % de la vitesse au moins` : "de justesse en « Pas à pas »"}. L'exercice s'ouvre dans l'entraînement (partition, notes qui tombent, mains séparées) ; travaille-le comme tu veux, puis fais un passage validant.</p>
       <button class="sf-btn pri" data-openpiece>Ouvrir l'exercice</button></div>`;
   }
 }
-const audioBtn = (q: Q) => (audioOf(q) ? `<button class="sf-btn cs-listen" data-replay>🔊 Réécouter</button>` : "");
+const audioBtn = (q: Q) => (audioOf(q) ? `<button class="sf-btn cs-listen" data-replay>${icon("volume-2")} Réécouter</button>` : "");
 function footIdle(q: Q): string {
   if (q.k === "info") return `<button class="cs-cta" data-next>Compris</button>`;
-  if (q.k === "touch" || q.k === "pedal") return `${"hint" in q && q.hint ? `<button class="cs-skip" data-hintbtn>💡 Indice</button>` : ""}<button class="cs-skip" data-nomidi>${midiSeen ? "Passer" : "Pas de clavier MIDI : passer"}</button>`;
+  if (q.k === "touch" || q.k === "pedal") return `${"hint" in q && q.hint ? `<button class="cs-skip" data-hintbtn>${icon("lightbulb")} Indice</button>` : ""}<button class="cs-skip" data-nomidi>${midiSeen ? "Passer" : "Pas de clavier MIDI : passer"}</button>`;
   if (q.k === "piece") return `<button class="cs-skip" data-skip>Passer (compte comme raté)</button>`;
-  const hint = "hint" in q && q.hint ? `<button class="cs-skip" data-hintbtn>💡 Indice</button>` : "";
+  const hint = "hint" in q && q.hint ? `<button class="cs-skip" data-hintbtn>${icon("lightbulb")} Indice</button>` : "";
   return hint;
 }
 
@@ -424,7 +425,7 @@ function onHint() {
   const r = run; if (!r || r.resolved) return;
   const q = r.q; r.hinted = true;
   const el = root.querySelector("#csHint") as HTMLElement;
-  if ("hint" in q && q.hint && el) el.textContent = "💡 " + q.hint;
+  if ("hint" in q && q.hint && el) el.textContent = q.hint;
   if (q.k === "press") markTargets(q);
   if (q.k === "seq" && kbd) kbd.mark(q.notes[r.seqPos], "target");
   if (q.k === "chord" && kbd) for (let k = q.kbd[0]; k <= q.kbd[1]; k++) if (q.pcs.includes(k % 12)) kbd.mark(k, "target");
@@ -499,7 +500,7 @@ function finishLesson() {
     <div class="cs-bigstars">${[1, 2, 3].map((i) => `<span class="${i <= res.stars ? "on" : ""}">★</span>`).join("")}</div>
     <h2>${res.stars === 3 ? "Leçon maîtrisée !" : res.stars === 2 ? "Bien joué !" : "Leçon terminée"}</h2>
     <p class="cs-small">${esc(r.lesson.title)}</p>
-    <div class="cs-sumstats"><div><b>${accuracy} %</b><small>du premier coup</small></div><div><b>+${res.xp}</b><small>XP</small></div><div><b>🔥 ${r.result.streak}</b><small>jour${r.result.streak > 1 ? "s" : ""} d'affilée</small></div></div>
+    <div class="cs-sumstats"><div><b>${accuracy} %</b><small>du premier coup</small></div><div><b>+${res.xp}</b><small>XP</small></div><div><b>${icon("flame")} ${r.result.streak}</b><small>jour${r.result.streak > 1 ? "s" : ""} d'affilée</small></div></div>
     ${accuracy < 70 ? `<p class="cs-small">Tu peux la refaire pour décrocher plus d'étoiles : la répétition, c'est comme ça qu'on apprend.</p>` : ""}
     <div class="cs-sumbtns">${nextOpen ? `<button class="sf-btn pri" data-start="${next.id}">Leçon suivante : ${esc(next.title)}</button>` : ""}<button class="sf-btn" data-again="${r.lesson.id}">Refaire</button><button class="sf-btn" data-leave>${exitTo ? esc(exitLabel) : "Retour au parcours"}</button></div></div></div>`;
 }
@@ -509,7 +510,7 @@ export function drillStats(): Record<string, { best: number; runs: number; last:
 /** Révision express du jour (séance du jour) : null s'il n'y a rien à revoir. */
 export function recallDrill(): Drill | null {
   const lessons = dueLessons(loadProgress());
-  return lessons.length ? { key: "recall", title: "Révision express", color: "#0ea5e9", icon: "🧠", make: () => recallQuestions(lessons) } : null;
+  return lessons.length ? { key: "recall", title: "Révision express", color: "#0ea5e9", icon: "brain", make: () => recallQuestions(lessons) } : null;
 }
 function finishRecall(r: Run, accuracy: number) {
   // une leçon est « fixée » si toutes ses questions ont été réussies du premier coup ; les questions passées ne comptent pas
@@ -521,7 +522,7 @@ function finishRecall(r: Run, accuracy: number) {
   r.summary = true;
   const rows = Object.entries(res).map(([id, ok]) => `<li class="${ok ? "ok" : "ko"}"><b>${ok ? "✓" : "↺"}</b> ${esc(lessonById(id)?.title ?? id)}<small>${ok ? "bien retenu : elle reviendra plus tard" : "elle revient demain"}</small></li>`).join("");
   root.innerHTML = `<div class="cs-lesson cs-done" style="--c:${r.drill!.color}"><div class="cs-sum">
-    <div class="cs-pic">🧠</div><h2>Révision express</h2>
+    <div class="cs-pic">${icon("brain")}</div><h2>Révision express</h2>
     <p class="cs-small">${accuracy} % du premier coup. Se rappeler ce qu'on a appris, à intervalles de plus en plus longs, c'est ce qui le fixe.</p>
     ${rows ? `<ul class="cs-recall">${rows}</ul>` : ""}
     <div class="cs-sumbtns"><button class="sf-btn pri" data-leave>${esc(drillBack)}</button></div></div></div>`;
@@ -571,7 +572,7 @@ export function coursePedal(down: boolean) {
   const r = run; if (!active || !r || r.summary || r.resolved || r.q.k !== "pedal") return;
   r.pedal!.push({ t: performance.now(), down });
   const ind = root.querySelector("#csPedal") as HTMLElement | null;
-  if (ind) { ind.textContent = down ? "🦶 pédale EN BAS : le son est tenu" : "🦶 pédale en haut : le son s'arrête au lâcher des touches"; ind.classList.toggle("down", down); }
+  if (ind) { ind.textContent = down ? "pédale EN BAS : le son est tenu" : "pédale en haut : le son s'arrête au lâcher des touches"; ind.classList.toggle("down", down); }
 }
 /** Ce qui s'est passé, dessiné : les accords (traits) et la pédale enfoncée (bande), avec la zone où il fallait la renfoncer. */
 function pedalTimeline(onsets: number[], pedal: { t: number; down: boolean }[]): string {
