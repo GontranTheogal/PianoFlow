@@ -121,9 +121,6 @@ export class LessonSession {
 
 // ───────────── validation ─────────────
 export const pressOk = (t: { midi: number } | { pcs: number[] }, midi: number): boolean => ("midi" in t ? t.midi === midi : t.pcs.includes(((midi % 12) + 12) % 12));
-/** Prochaine touche d'une suite : « ok » (bonne), « bad » (mauvaise). */
-export const seqStep = (notes: number[], i: number, midi: number): "ok" | "bad" => (notes[i] === midi ? "ok" : "bad");
-
 /** Accord : touches enfoncées « ensemble » = dans une fenêtre de temps ; réussi quand toutes les classes de hauteur sont là, sans intruse. */
 export class ChordCollector {
   private t0 = 0; private keys: number[] = [];

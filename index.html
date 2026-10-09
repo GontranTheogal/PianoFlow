@@ -80,7 +80,7 @@
     .brand { font-weight:800; font-size:17px; margin-right:6px; cursor:pointer; background:linear-gradient(90deg, var(--brand-a), var(--brand-b), var(--brand-c)); -webkit-background-clip:text; background-clip:text; color:transparent; }
     #songTitle { font-weight:700; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     #midiStatus { font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap; max-width:190px; overflow:hidden; text-overflow:ellipsis; padding:7px 12px; border-radius:999px; background:var(--clay-2); cursor:help; }
-    #midiStatus.ok { color:var(--ink-ok); background:var(--tint-ok); } #midiStatus.unsure { color:var(--ink-warn); background:var(--tint-warn); }
+    #midiStatus.ok { color:var(--ink-ok); background:var(--tint-ok); }
     .pill { font-size:12px; color:var(--muted); padding:6px 12px; border-radius:999px; background:var(--clay-2); box-shadow:var(--shadow-in); }
 
 
@@ -97,9 +97,6 @@
     .how { font-size:12px; color:var(--muted); margin:-2px 0 4px; } .how summary { cursor:pointer; font-weight:700; color:var(--text); } .how p { margin:8px 0 0; line-height:1.5; }
     /* pendant une leçon : rien d'autre à l'écran que la leçon */
     body.in-lesson #tabs { display:none; }
-    #syncChip { width:34px; height:34px; padding:0; display:inline-grid; place-items:center; font-size:15px; position:relative; }
-    #syncChip.warn::after { content:""; position:absolute; right:3px; top:3px; width:9px; height:9px; border-radius:50%; background:#f59e0b; border:2px solid #fff; }
-    #syncChip.ok { color:var(--ink-ok); }
     /* tablette en portrait, téléphone : les onglets passent en bas, sous le pouce */
     @media (max-width: 900px) {
       body:not(.in-practice):not(.in-lesson) { --tabbar-h: calc(62px + env(safe-area-inset-bottom, 0px)); }
@@ -129,7 +126,6 @@
 
     /* BIBLIOTHEQUE (HOME) */
     #libraryHomeView { max-width:1200px; margin:0 auto; padding:30px 24px 60px; height:calc(100vh - var(--header-h, 56px) - var(--tabbar-h, 0px)); height:calc(100dvh - var(--header-h, 56px) - var(--tabbar-h, 0px)); overflow-y:auto; }
-    .libsync { font-size:12px; margin:14px 0 0 !important; }
     .home-head { margin-bottom:20px; }
     .home-head h1 { font-size:26px; margin:0 0 4px; }
     .home-head p { color:var(--muted); margin:0 0 20px; }
@@ -487,7 +483,7 @@
     .diff-slot { min-height:22px; display:block; }
     .song-info .rep-bar { margin-top:8px; } .song-info .rep-btns { margin-top:8px; } .song-info .rep-ok, .song-info .rep-prog { display:block; margin-top:6px; }
     .lib-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:22px 0 16px; flex-wrap:wrap; }
-    .lib-tip { color:var(--muted); font-size:13px; margin:0; max-width:620px; line-height:1.5; } .libsync { display:block; margin-top:4px; font-size:12px; }
+    .lib-tip { color:var(--muted); font-size:13px; margin:0; max-width:620px; line-height:1.5; }
     .lib-empty { color:var(--muted); background:var(--bg-1); border-radius:16px; padding:18px; box-shadow:var(--shadow-out); max-width:620px; line-height:1.5; }
     .lib-seg { flex-wrap:wrap; max-width:100%; background:var(--clay-hi); margin-bottom:14px; } .lib-seg button { color:var(--muted); } .lib-seg button small { font-weight:600; opacity:.75; margin-left:4px; }
     @media (max-width:600px) { .lib-seg { display:flex; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; } .lib-seg::-webkit-scrollbar { display:none; } .lib-seg button { flex:none; } }
@@ -578,12 +574,11 @@
     <nav id="tabs" aria-label="Navigation">
       <button class="tab" data-tab="today" title="Ta séance du jour et tes progrès"><span>☀️</span><b>Aujourd'hui</b></button>
       <button class="tab" data-tab="course" title="Le parcours : leçons pas à pas, du premier Do aux septièmes"><span>🗺️</span><b>Parcours</b></button>
-      <button class="tab" data-tab="library" title="Le répertoire gradué et tes partitions (synchronisées entre tes appareils)"><span>🎵</span><b>Morceaux</b></button>
+      <button class="tab" data-tab="library" title="Le répertoire gradué et tes partitions"><span>🎵</span><b>Morceaux</b></button>
       <button class="tab" data-tab="exercises" title="Lecture, déchiffrage, rythme, oreille, gammes et accords"><span>🎯</span><b>Exercices</b></button>
     </nav>
     <input type="file" id="file" accept=".xml,.musicxml,.mxl,.pdf,.mid,.midi" />
     <div class="grow"></div>
-    <button class="chip" id="syncChip" title="Synchronisation entre tes appareils">☁</button>
     <span id="midiStatus" title="Recherche du clavier MIDI…"><span>🎹</span> <b>Recherche…</b></span>
     <button class="btn clay icon" id="toggleSettings" title="Réglages">⚙️</button>
   </header>
@@ -623,16 +618,6 @@
       <div class="hint">Le morceau joue la main que tu ne travailles pas ; tes touches, elles, sonnent grâce à cette option. Désactive-la si ton piano numérique a déjà ses haut-parleurs.</div>
       <div class="row"><label>Métronome</label><div style="display:flex;gap:8px;align-items:center"><input type="number" id="bpm" min="40" max="220" value="80" /><label class="toggle"><input type="checkbox" id="metro" /><span></span></label></div></div>
     </div>
-    <div class="section" id="pcSection">
-      <h4>Synchronisation</h4>
-      <div class="row"><label>État</label><span id="pcStatus" style="font-size:12px;color:var(--muted);text-align:right">Recherche…</span></div>
-      <div id="codeRow" class="hidden">
-        <div class="hint">Saisis le <b>même code</b> sur chaque appareil (PC, iPad…) : ils partageront bibliothèque et progression. Garde-le secret : il donne accès à tes partitions.</div>
-        <div class="row"><input type="text" id="syncCode" placeholder="code de synchro" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;min-width:0" /></div>
-        <div class="presets"><button id="genCode">Générer un code</button><button id="copyCode">Copier</button></div>
-      </div>
-      <button class="btn clay" id="pcSyncBtn" style="width:100%;justify-content:center;margin-top:8px">🔄 Synchroniser maintenant</button>
-    </div>
   </div>
 
   <!-- BIBLIOTHÈQUE -->
@@ -645,7 +630,7 @@
     <div id="repGrid"></div>
     <div id="myScores" class="hidden">
       <div class="lib-head">
-        <p class="lib-tip">MusicXML ou MXL (MuseScore, musescore.com, IMSLP), identiques sur tous tes appareils. <span id="libSyncLine" class="libsync"></span></p>
+        <p class="lib-tip">MusicXML ou MXL (MuseScore, musescore.com, IMSLP).</p>
         <button class="btn clay primary" id="homeOpenBtn2">＋ Ajouter une partition</button>
       </div>
       <p id="libraryHomeEmpty" class="lib-empty hidden">Aucune partition pour l'instant. Une partition en PDF ? Convertis-la avec MuseScore (Fichier → Importer un PDF), puis exporte-la en MusicXML.</p>

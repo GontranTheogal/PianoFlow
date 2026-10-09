@@ -16,16 +16,14 @@ import { Synth } from "./audio";
 import { noteName } from "./names";
 import { getStats, getAll, recordPlay } from "./stats";
 import { listLibrary, addToLibrary, toggleFavorite, removeFromLibrary, renameSong } from "./library";
-import { isDesktopApp, isIpadApp } from "./sync";
-import { startPcSync, syncNow, setHandlers as setPcHandlers, getSavedUrl, saveUrl, servedByPc, isCloud, getSyncCode, saveSyncCode, generateSyncCode } from "./pcsync";
 import { rateDifficulty, pieceFromSteps, LEVEL_LABEL } from "./difficulty";
 import { xmlDifficulty } from "./difficultyXml";
-import { exportBackup, importBackup } from "./backup";
+import { exportBackup, importBackup, LEGACY_KEYS } from "./backup";
 import * as Review from "./review";
 import { pedalMarks, judgePedalMarks, type PedalMark } from "./pedalJudge";
 import { initSolfege, openSolfege, closeSolfege, solfegeMidi, solfegeActive } from "./solfege";
 import { initTech, openTech, closeTech, techMidi, techActive } from "./tech";
-import { initCourse, openCourse, closeCourse, courseMidi, coursePedal, courseActive, refreshCourse, startDrill, startLessonById, clearLessonExit, recallDrill, _state as courseState, type Drill } from "./course/ui";
+import { initCourse, openCourse, closeCourse, courseMidi, coursePedal, courseActive, startDrill, startLessonById, clearLessonExit, recallDrill, _state as courseState, type Drill } from "./course/ui";
 import { initExercises, openExercises, launch as launchExercise } from "./exercisesView";
 import { initToday, openToday, resetTodayView, repLevel } from "./today";
 import * as Daily from "./daily";
@@ -34,6 +32,7 @@ import { LESSONS } from "./course/curriculum";
 import * as X from "./exercises";
 import * as T from "./techCore";
 import { setKeyboardRange, rangeForNotes, WHITE_COUNT } from "./keyboardLayout";
+import { esc } from "./html";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const store = {
@@ -78,7 +77,16 @@ const scoreEl = $("score");
 const isShown = (n: { hand: "R" | "L" }) => follower.hand === "both" || n.hand === follower.hand;
 const loopStartIndex = () => (follower.loop ? follower.findIndexAtOrAfter(follower.loop.start) : 0);
 const cleanName = (n: string) => n.replace(/\.(xml|musicxml|mxl)$/i, "");
-const escapeHtml = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+/** La partition (SVG de Verovio, tiré d'un fichier importé) : insérée sans script, sans gestionnaire on…, sans lien externe. */
+function setScoreSvg(el: HTMLElement, svg: string) {
+  const doc = new DOMParser().parseFromString(svg, "image/svg+xml"), root = doc.documentElement;
+  if (root.nodeName !== "svg") { el.replaceChildren(); return; }
+  root.querySelectorAll("script, foreignObject, iframe, object, embed").forEach((n) => n.remove());
+  for (const n of [root, ...Array.from(root.querySelectorAll("*"))]) for (const at of Array.from(n.attributes)) {
+    if (/^on/i.test(at.name) || (/href$/i.test(at.name) && !at.value.startsWith("#"))) n.removeAttribute(at.name);
+  }
+  el.replaceChildren(document.importNode(root, true));
+}
 
 function toast(msg: string, ms = 1800) {
   const el = $("toast"); el.textContent = msg; el.classList.add("show");
@@ -111,7 +119,6 @@ player.onFinished = () => {                 // fin de la démo ▶ : on reprend 
   updatePlayBtn();
 };
 
-const starsFor = (acc: number) => (acc >= 95 ? "⭐⭐⭐" : acc >= 80 ? "⭐⭐" : "⭐");
 
 /** Fin d'un passage en Pas à pas (fin du morceau ou de la boucle). */
 function finishLearn(loopPass = false) {
@@ -136,7 +143,7 @@ function reportPass(r: PassResult) {
     for (const m of r.summary.weak) Review.reviewFail(Review.measureKey(songName, m), `mesure ${m + 1} · ${title}`, `loop:${songName}|${m}`);
     if (r.score >= 90 && r.loop) for (let m = r.loop.a; m < r.loop.b; m++) Review.reviewPass(Review.measureKey(songName, m));
   }
-  if (dailyTag) { Daily.markDone(dailyTag); void syncNow(); }
+  if (dailyTag) Daily.markDone(dailyTag);
   // compétences : déchiffrage et échauffement d'après leur étape, le jeu en rythme d'après les morceaux (hors leçons)
   if (!pieceHook && (dailyTag === "sight" || dailyTag === "warmup")) Skills.record(dailyTag, r.score);
   else if (!pieceHook && songName && r.mode === "rhythm" && !loopM && r.speed >= 70) Skills.record("play", r.score);
@@ -239,7 +246,6 @@ $("fingerBar").addEventListener("click", (e) => {
     const f = Number(b.dataset.ff), id = fSel.id;
     FE.setEdit(songName, keyOf(fSel), f || null); recomputeFingering();
     fSel = allNotes.find((n) => n.id === id) ?? null; renderFingerBar(); markFingerSel();
-    setTimeout(() => void syncNow(), 1500);
     return;
   }
   if (b.dataset.fnext !== undefined) { fSel = null; follower.seek(Math.min(steps.length - 1, follower.index + 1)); return; }
@@ -867,7 +873,7 @@ async function openFile(file: File, opts: OpenOpts = {}) {
   songName = file.name; $("songTitle").textContent = cleanName(file.name);
   try {
     const res = await loadScore(file);
-    scoreEl.innerHTML = res.svg;
+    setScoreSvg(scoreEl, res.svg);
     steps = res.steps; measureStarts = res.measureStarts; meter = res.meter;
     annotateHands(steps);
     pieceMarks = res.xmlText ? pedalMarks(res.xmlText) : [];
@@ -979,7 +985,6 @@ initSolfege($("solfegeView"), { play: (p, ms) => { void synth.playNote(p, ms ?? 
 initCourse($("courseView"), {
   play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, click: (accent) => synth.click(accent), soundOnPress: () => soundOnPress,
   openPiece: (xml, title, o) => { void openFile(new File([xml], title + ".musicxml", { type: "application/xml" }), { library: false, back: "course", hands: o.hands, speed: o.mode === "rhythm" ? o.minSpeed : 100, hook: { pass: o.pass, mode: o.mode, minSpeed: o.minSpeed, hands: o.hands, cb: o.onResult } }); },
-  onProgress: () => { void syncNow(); },
   onDrillExit: () => showTab(drillReturn),
 });
 initExercises($("exercisesView"), {
@@ -1018,7 +1023,7 @@ const LIB_GROUPS: { id: LibGroup; label: string; intro: string; after?: string }
 const CHORD_LETTERS = `<details class="rep-more"><summary>Lire les lettres d'accords (C, G, Am…)</summary><p>C = Do, D = Ré, E = Mi, F = Fa, G = Sol, A = La, B = Si. Une lettre seule : accord majeur ; suivie de « m » : mineur (Am = La mineur). La main gauche joue cet accord avec un motif simple (basse, basse-quinte, arpège), jusqu'à la lettre suivante. Tout est expliqué dans l'unité « Accompagner une chanson » du parcours.</p></details>`;
 let libGroup: LibGroup | null = null;
 /** Pastille de difficulté (1 à 5) : le libellé, et ce qui rend le morceau difficile en infobulle. */
-const diffChip = (level: number, why: string[] = []) => `<span class="diff d${level}" title="${escapeHtml(why.length ? "Ce qui est difficile : " + why.join(", ") : "")}">${"●".repeat(level)}${"○".repeat(5 - level)} ${LEVEL_LABEL[level as 1]}</span>`;
+const diffChip = (level: number, why: string[] = []) => `<span class="diff d${level}" title="${esc(why.length ? "Ce qui est difficile : " + why.join(", ") : "")}">${"●".repeat(level)}${"○".repeat(5 - level)} ${LEVEL_LABEL[level as 1]}</span>`;
 /** Ouvre un morceau d'après son nom de fichier : répertoire intégré, sinon bibliothèque. */
 async function openByName(name: string, o: OpenOpts): Promise<boolean> {
   const p = repByFile(name);
@@ -1042,19 +1047,19 @@ async function renderLibraryHome() {
   const pieces: RepPiece[] = g === "songs" ? SONGS : g === "mine" ? [] : repOfLevel(Number(g));
   const unitOf = (id?: string) => LESSONS.find((l) => l.id === id)?.unit.title;
   const level = g === "songs" || g === "mine" ? 0 : Number(g);
-  const where = !level ? "" : level === lv ? " <b>À ton niveau.</b>" : level > lv && unitOf(grp.after) ? ` Conseillé après l'unité « ${escapeHtml(unitOf(grp.after)!)} » : tu peux essayer avant, très lentement.` : "";
-  rep.innerHTML = g === "mine" ? "" : `<p class="rep-intro">${escapeHtml(grp.intro)}${where}</p>${g === "songs" ? CHORD_LETTERS : ""}<div class="rep-row">${pieces.map((p) => {
+  const where = !level ? "" : level === lv ? " <b>À ton niveau.</b>" : level > lv && unitOf(grp.after) ? ` Conseillé après l'unité « ${esc(unitOf(grp.after)!)} » : tu peux essayer avant, très lentement.` : "";
+  rep.innerHTML = g === "mine" ? "" : `<p class="rep-intro">${esc(grp.intro)}${where}</p>${g === "songs" ? CHORD_LETTERS : ""}<div class="rep-row">${pieces.map((p) => {
     const st = stats[repFileName(p)], pct = coachAll[repFileName(p)]?.pct ?? 0, best = st?.bestRhythm ?? 0;
     const status = best >= 90 ? `<span class="rep-ok">✓ maîtrisé (${best} %)</span>` : pct ? `<span class="rep-prog">coach ${pct} %</span>` : "";
-    return `<div class="rep-card"><div class="rep-top"><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.composer)}</small></div>
-      <span class="diff-slot" data-diff="${p.id}"></span><p class="rep-skills">${escapeHtml(p.skills)}</p><div class="rep-bar"><i style="width:${Math.max(pct, best >= 90 ? 100 : 0)}%"></i></div>${status}
-      <div class="rep-btns"><button class="btn clay primary" data-rep="${p.id}" data-coach="1" title="${escapeHtml(p.tip)}">🎯 Apprendre</button><button class="btn clay" data-rep="${p.id}">▶ Jouer</button></div></div>`;
+    return `<div class="rep-card"><div class="rep-top"><b>${esc(p.title)}</b><small>${esc(p.composer)}</small></div>
+      <span class="diff-slot" data-diff="${p.id}"></span><p class="rep-skills">${esc(p.skills)}</p><div class="rep-bar"><i style="width:${Math.max(pct, best >= 90 ? 100 : 0)}%"></i></div>${status}
+      <div class="rep-btns"><button class="btn clay primary" data-rep="${p.id}" data-coach="1" title="${esc(p.tip)}">🎯 Apprendre</button><button class="btn clay" data-rep="${p.id}">▶ Jouer</button></div></div>`;
   }).join("")}</div>`;
   // difficultés calculées après l'affichage, une carte à la fois (mise en cache)
   const slots = Array.from(rep.querySelectorAll<HTMLElement>("[data-diff]"));
   const fill = () => { const el = slots.shift(); if (!el) return; const p = repById(el.dataset.diff!); if (p) { const d = xmlDifficulty(repXml(p), p.id); el.innerHTML = diffChip(d.level, d.reasons); } setTimeout(fill, 0); };
   setTimeout(fill, 30);
-  // ── partitions de l'utilisateur (synchronisées) ──
+  // ── partitions de l'utilisateur ──
   const host = $("libraryGrid");
   host.innerHTML = "";
   $("libraryHomeEmpty").classList.toggle("hidden", list.length > 0);
@@ -1064,7 +1069,7 @@ async function renderLibraryHome() {
     card.className = "song-card";
     let hash = 0; for (let i = 0; i < e.name.length; i++) hash = (hash << 5) - hash + e.name.charCodeAt(i);
     const hue = Math.abs(hash) % 360;
-    const title = escapeHtml(cleanName(e.name));
+    const title = esc(cleanName(e.name));
     card.innerHTML = `
       <div class="song-cover" style="background:linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 60) % 360} 70% 45%))">
         <button class="fav-btn">${e.favorite ? "★" : "☆"}</button>
@@ -1088,7 +1093,7 @@ async function renderLibraryHome() {
     card.querySelector(".fav-btn")!.addEventListener("click", async (ev) => { ev.stopPropagation(); await toggleFavorite(e.name); renderLibraryHome(); });
     card.querySelector(".song-del")!.addEventListener("click", async (ev) => {
       ev.stopPropagation();
-      if (confirm("Supprimer ce morceau (sur tous tes appareils) ?")) { await removeFromLibrary(e.name); renderLibraryHome(); }
+      if (confirm("Supprimer ce morceau ?")) { await removeFromLibrary(e.name); renderLibraryHome(); }
     });
     card.querySelector(".edit-btn")!.addEventListener("click", async (ev) => {
       ev.stopPropagation();
@@ -1203,13 +1208,13 @@ let sustain = false;
 let pedalEvents: { t: number; down: boolean }[] = [], pieceMarks: PedalMark[] = [];
 initMidi(onKey, (s) => {
   // le nom du clavier plutôt qu'un « connecté » générique : on voit tout de suite si c'est bien le sien
-  const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "unsure" ? "Joue une note" : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
-  el.innerHTML = `<span>🎹</span> <b>${escapeHtml(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok"); el.classList.toggle("unsure", s.state === "unsure");
+  const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
+  el.innerHTML = `<span>🎹</span> <b>${esc(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok");
 },
   (cc, v) => { if (cc !== 64) return; const was = sustain; sustain = v >= 64; coursePedal(sustain); if (run && was !== sustain) pedalEvents.push({ t: player.playhead, down: sustain }); });
 
 // ───────────── ma main ─────────────
-const paintHand = (() => {
+(() => {
   const span = $("handSpan") as HTMLInputElement, thumb = $("handThumb") as HTMLInputElement;
   const paint = () => {
     const h = loadHand();
@@ -1218,7 +1223,7 @@ const paintHand = (() => {
   };
   const apply = () => {
     saveHand({ span: Number(span.value), thumbIndex: thumb.value ? Number(thumb.value) : undefined });
-    paint(); recomputeFingering(); setTimeout(() => void syncNow(), 800);       // la main mesurée suit l'utilisateur d'un appareil à l'autre
+    paint(); recomputeFingering();
   };
   span.addEventListener("change", apply); thumb.addEventListener("change", apply);
   $("handPresets").addEventListener("click", (e) => { const b = (e.target as HTMLElement).closest("button"); if (b) { span.value = b.dataset.span!; thumb.value = ""; apply(); } });
@@ -1226,9 +1231,8 @@ const paintHand = (() => {
   return paint;
 })();
 
-// ───────────── synchronisation entre appareils (Netlify, ou PC local) ─────────────
-
 // ───────────── démarrage ─────────────
+try { LEGACY_KEYS.forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ }
 Daily.startTracking();
 syncHeaderHeight();
 player.restart();
@@ -1248,18 +1252,8 @@ function showUpdateBanner() {
   b.querySelector("button")!.addEventListener("click", () => location.reload());
   document.body.appendChild(b);
 }
-// App iPad « coquille » (site chargé en ligne, sans service worker) : au retour sur l'app, on regarde si le site a changé.
-if (isIpadApp() && /^https:$/.test(location.protocol)) {
-  const mine = () => Array.from(document.querySelectorAll<HTMLScriptElement>("script[type=module][src]")).map((x) => x.getAttribute("src")!);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
-    fetch("./index.html", { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((html) => {
-      const cur = mine(); if (html && cur.length && !cur.every((src) => html.includes(src))) showUpdateBanner();
-    }).catch(() => {});
-  });
-}
 // Service worker (hors-ligne) : uniquement en contexte sécurisé (https ou localhost).
-if ("serviceWorker" in navigator && window.isSecureContext && !isDesktopApp() && !isIpadApp()) {
+if ("serviceWorker" in navigator && window.isSecureContext) {
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("./sw.js").then((reg) => {
     // vérifier régulièrement s'il y a une nouvelle version (au retour sur l'appli, et toutes les 30 min)

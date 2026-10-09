@@ -101,7 +101,6 @@ const L3_ORDER = ["clementi", "chopin20", "valse", "chopin4", "arabesque", "muse
 /** Tous les morceaux intégrés ; l'onglet Morceaux montre les niveaux 1 à 3. */
 export const REPERTOIRE: RepPiece[] = [...COURSE_PIECES, ...SONGS, ...THEMES.filter((p) => p.level === 1), ...LEVEL1, ...TRANSITION.filter((p) => p.level === 1), ...MUTOPIA.filter((p) => p.level === 1), ...THEMES.filter((p) => p.level === 2), ...LEVEL2, ...TRANSITION.filter((p) => p.level === 2), ...MUTOPIA.filter((p) => p.level === 2), ...L3_ORDER.map((id) => [...LEVEL3, ...TRANSITION, ...MUTOPIA].find((p) => p.id === id)!)];
 export { SONGS };
-export const REP_LEVELS = [1, 2, 3] as const;
 export const repOfLevel = (lv: number) => REPERTOIRE.filter((p) => p.level === lv && !p.song);
 
 export const repXml = (p: RepPiece) => buildXml(p.spec());

@@ -11,6 +11,7 @@ import { fingerHand, triadFingering } from "./fingerCore";
 import { DEFAULT_WEIGHTS } from "./fingerCore";
 import { FINGERING_MODEL, FINGERING_WEIGHTS, FINGERING_FEATURES } from "./fingeringModel";
 import { loadHand } from "./hand";
+import { esc } from "./html";
 
 /** Gammes & arpèges : comprendre (armure, recette en tons/demi-tons, doigtés, partition), jouer sur le clavier,
  *  reconstruire la gamme de mémoire avec explications, puis s'entraîner dans le moteur principal
@@ -24,7 +25,6 @@ function load(): St {
   const d: St = { kind: "major", form: "natural", arp: "major", key: 0, hand: "R", show: "deg", oct: 1, dir: "up", bpm: 72, ckey: 0, deg: 1, seventh: false, inv: 0, voicing: "root" };
   try { return { ...d, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return d; }
 }
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 let host: TechHost, root: HTMLElement, body: HTMLElement, kbdBox: HTMLElement, kbd: MiniKeyboard;
 let st = load(), active = false, token = 0, sv: StaffView | null = null, playTok = 0;
@@ -285,7 +285,6 @@ function openPractice() {
 
 export function techMidi(pitch: number, _vel: number, on: boolean) { if (active && on) onPress(pitch, true); }
 export const techActive = () => active;
-export const _debug = () => ({ st, build: build ? { ...build } : null, tags: sv ? sv.n : 0 });
 export function openTech() { active = true; render(); }
 export function closeTech() { active = false; token++; playTok++; build = null; }
 

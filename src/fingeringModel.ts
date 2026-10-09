@@ -1,5 +1,5 @@
-// Modèle de doigté appris à partir de partitions doigtées réelles. Généré par scripts/train-fingering.ts, voir TRAINING.md.
-// Ne pas modifier à la main.
+// Modèle de doigté appris à partir de partitions doigtées réelles (corpus Mutopia). Données figées : le script d'entraînement
+// (scripts/train-fingering.ts) a été retiré du dépôt, il reste dans l'historique git. Ne pas modifier à la main.
 // Entraînement : 39892 notes doigtées (154 fichiers utilisables, dont un sur cinq mis de côté) ; concordance sur les
 // 11290 notes doigtées mises de côté : 69.5 % (varie selon les morceaux tirés ; validation croisée dans TRAINING.md).
 

@@ -3,6 +3,7 @@ import * as C from "./solfegeCore";
 import { MiniKeyboard } from "./miniKeyboard";
 import { markDone } from "./daily";
 import { record as recordSkill } from "./skills";
+import { esc } from "./html";
 
 /** Mode solfège : apprendre la clé de Sol et la clé de Fa, avec ou sans piano.
  *  Notes aléatoires (toute la portée, lignes supplémentaires comprises), par manche de 10 ou en continu.
@@ -18,7 +19,6 @@ function loadPrefs(): UiPrefs {
   const d: UiPrefs = { clef: "G", input: "screen", run: "round", pace: "wait" };
   try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || "{}") }; } catch { return d; }
 }
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 export const PC_FR = ["Do", "Do♯", "Ré", "Ré♯", "Mi", "Fa", "Fa♯", "Sol", "Sol♯", "La", "La♯", "Si"];
 const NAMES7 = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
 
@@ -241,11 +241,6 @@ export function solfegeMidi(pitch: number, _velocity: number, on: boolean) {
   answerPitch(pitch);
 }
 export const solfegeActive = () => active;
-export const _debugCurrent = () => {
-  const r = run; if (!r || r.cur >= r.seq.length) return null;
-  const it = r.seq[r.cur];
-  return { pitch: C.midiOf(it), li: C.spell(it.clef, it.pos).li, alter: it.alter, done: !!r.res[r.cur], retry: r.retry[r.cur], cur: r.cur, n: r.seq.length, counted: r.counted, ended: r.ended, flow: r.flow };
-};
 export function openSolfege() { active = true; prog = C.loadProgress(); render(); }
 export function closeSolfege() { active = false; stopRun(); }
 

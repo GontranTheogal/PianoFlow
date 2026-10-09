@@ -1,7 +1,7 @@
 /** Unités 1 à 8 du parcours : du clavier à la gamme de Do — lecture, rythme, intervalles, accords. Chaque leçon n'exige que ce qui précède. */
-import { P, M, pick, shuffle, drawN, kb, kbFor, piece, seqFromPiece, pieceFrom, chordEv as cEv, type Dur, fr, frWhite, info, choice, pressPc, pressMidi, seqQ, readSet, pieceQ, staffShow, chordShow, markKeys, KB_RH, KB_LH, KB_BOTH, KB_ALL, evs, note, rest, dur, type Rng, type Tok } from "./build";
+import { P, M, pick, shuffle, drawN, kb, piece, seqFromPiece, pieceFrom, chordEv as cEv, info, choice, pressPc, pressMidi, seqQ, readSet, pieceQ, chordShow, markKeys, KB_RH, KB_LH, KB_ALL, evs, note, dur, type Rng, type Tok } from "./build";
 import { POS_UP_DOWN, AU_CLAIR, MARY, ODE, ODE_LH, AU_CLAIR_LH, MARY_LH, rh, lh, progression, chordQ } from "./pieces";
-import { MAJOR_KEYS, MINOR_KEYS, pieceNotes, midiOf as tMidi, buildPieceXml } from "../techCore";
+import { MAJOR_KEYS, buildPieceXml } from "../techCore";
 import { midiOf, chordPitches, invert, nameOf, type Pitch } from "./theory";
 import type { Q, Lesson, Unit, Show } from "./types";
 

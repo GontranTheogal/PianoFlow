@@ -11,7 +11,6 @@ const STEP = ["C", "D", "E", "F", "G", "A", "B"];
 export interface Pitch { li: number; alter: number; oct: number; }
 export const midiOf = (p: Pitch) => SEMI[p.li] + p.alter + 12 * (p.oct + 1);
 export const nameOf = (p: { li: number; alter: number }) => FR[p.li] + (p.alter > 0 ? "♯".repeat(p.alter) : p.alter < 0 ? "♭".repeat(-p.alter) : "");
-const isBlack = (m: number) => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
 
 export type Mode = "major" | "minor";
 export type Form = "major" | "natural" | "harmonic" | "melodic";

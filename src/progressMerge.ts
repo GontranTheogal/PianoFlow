@@ -1,9 +1,13 @@
-/** Fusion de la progression entre appareils (pure : testable sans navigateur). */
+/** Fusion de la progression à l'import d'une sauvegarde (pure : testable sans navigateur). */
 
 /** Clés où le plus récent gagne (réglages qui peuvent baisser) ; les autres sont fusionnées par « meilleur des deux » (records, étoiles…). */
 export const LATEST_WINS: Record<string, string> = { "pianoflow-hand": "updatedAt" };
 /** Clés dont chaque entrée est datée : entrée par entrée, la plus récente gagne (corrections de doigtés par morceau, maîtrise d'une compétence, qui peut baisser). */
 export const LATEST_PER_ENTRY: Record<string, string> = { "pianoflow-fingerings": "at", "pianoflow-skills": "t", "pianoflow-recall": "t" };
+
+/** Clés jamais recopiées depuis un fichier importé (pollution de prototype). */
+const UNSAFE = new Set(["__proto__", "constructor", "prototype"]);
+const keysOf = (a: object, b: object) => [...new Set([...Object.keys(a), ...Object.keys(b)])].filter((k) => !UNSAFE.has(k));
 
 /** Fusion « monotone » : on garde toujours le meilleur des deux côtés (records, étoiles, succès). Aucun conflit possible. */
 export function mergeMax(a: any, b: any): any {
@@ -13,7 +17,7 @@ export function mergeMax(a: any, b: any): any {
   if (Array.isArray(a) && Array.isArray(b)) return [...new Set([...a, ...b].map((x) => JSON.stringify(x)))].map((x) => JSON.parse(x));
   if (a && b && typeof a === "object" && typeof b === "object") {
     const o: any = {};
-    for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) o[k] = mergeMax(a[k], b[k]);
+    for (const k of keysOf(a, b)) o[k] = mergeMax(a[k], b[k]);
     return o;
   }
   return b;
@@ -38,7 +42,7 @@ export function mergeKey(key: string, local: any, remote: any): any {
   const per = LATEST_PER_ENTRY[key];
   if (per && local && remote && typeof local === "object" && typeof remote === "object") {
     const o: any = {};
-    for (const k of new Set([...Object.keys(local), ...Object.keys(remote)])) {
+    for (const k of keysOf(local, remote)) {
       const l = local[k], r = remote[k];
       o[k] = l === undefined ? r : r === undefined ? l : (r?.[per] ?? 0) > (l?.[per] ?? 0) ? r : l;
     }

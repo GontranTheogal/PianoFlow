@@ -187,6 +187,5 @@ export function fiveFinger(key: KeyDef): { spec: PieceSpec; title: string } {
   const title = `Cinq doigts en ${nameOf(key)} (majeur puis mineur)`;
   return { title, spec: { title, bpm: 80, fifths: key.fifths, rh, lh } };
 }
-export const FIVE_KEYS: KeyDef[] = MAJOR_KEYS;
 export const xmlOf = (s: PieceSpec) => buildXml(s);
 void MINOR_KEYS;

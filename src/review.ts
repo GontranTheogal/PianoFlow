@@ -44,4 +44,3 @@ export function recordRhythmRun(s: { early: number; late: number; miss: number; 
   try { localStorage.setItem(WEEK_KEY, JSON.stringify(all)); } catch { /* ignore */ }
 }
 export function weekRhythm(offset = 0): WeekRec | null { return loadWeeks()[String(weekOf() - 7 * offset)] ?? null; }
-export const mondayNum = weekOf;

@@ -3,6 +3,7 @@
  *  d'entraînement comme n'importe quel morceau. */
 import { keySigAlter } from "../solfegeCore";
 import type { Pitch } from "./theory";
+import { esc } from "../html";
 
 /** Durées en croches : 0.25 = triple croche, 0.5 = double, 1 = croche, 2 = noire, 4 = blanche, 8 = ronde ;
  *  × 1,5 = pointée (1.5, 3, 6…), × 1,75 = double pointée ; × 2/3 = triolet (2/3 = croche de triolet, 1/3 = double croche de triolet, 4/3 = noire de triolet). */
@@ -34,7 +35,6 @@ const BASES: [number, string][] = [[8, "whole"], [4, "half"], [2, "quarter"], [1
 const DIV = 24;                                  // divisions par noire : triolets et triples croches tombent juste
 const xmlDur = (d: number) => Math.round(d * (DIV / 2));
 const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 /** Figure de note d'une durée : type, points, triolet. */
 export function durType(d: number): { type: string; dots: number; tup: boolean; base: number } {

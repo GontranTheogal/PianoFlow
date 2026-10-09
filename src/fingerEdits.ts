@@ -7,7 +7,6 @@ function all(): Record<string, SongEdits> { try { return JSON.parse(localStorage
 function save(a: Record<string, SongEdits>) { try { localStorage.setItem(KEY, JSON.stringify(a)); } catch { /* ignore */ } }
 
 export function editsFor(song: string): Map<string, number> { return new Map(Object.entries(all()[song]?.f ?? {})); }
-export function editCount(song: string): number { return Object.keys(all()[song]?.f ?? {}).length; }
 /** `finger` null : on rend la note à l'algorithme. */
 export function setEdit(song: string, key: string, finger: number | null) {
   const a = all(), e = a[song] ?? { at: 0, f: {} };

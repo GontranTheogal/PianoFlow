@@ -1,5 +1,4 @@
-# Publie PianoFlow en https sur GitHub Pages à chaque push sur main : gratuit et sans limite de mises en ligne.
-# La synchro (code de synchro) reste servie par Netlify : voir GITHUB_PAGES.md.
+# Publie PianoFlow en https sur GitHub Pages à chaque push sur main (tests d'abord).
 # Réglage unique : GitHub → Settings → Pages → Source : « GitHub Actions ».
 name: deploy-pages
 on: { push: { branches: [main] }, workflow_dispatch: {} }
@@ -12,10 +11,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - run: npm install
+      - run: npm ci
+      - run: npm test
       - run: npm run build
-        # la synchro reste sur Netlify (fonction /api) : variable de dépôt PIANOFLOW_URL = https://ton-site.netlify.app
-        env: { VITE_SYNC_URL: "${{ vars.PIANOFLOW_URL }}" }
       - uses: actions/upload-pages-artifact@v3
         with: { path: dist }
   deploy:

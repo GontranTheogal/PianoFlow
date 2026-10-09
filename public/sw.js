@@ -1,4 +1,4 @@
-// Hors-ligne : actif seulement en https / localhost (contexte sécurisé). Jamais pour /api/.
+// Hors-ligne : actif seulement en https / localhost (contexte sécurisé).
 // dist/sw.js reçoit en tête __PRECACHE__ (liste des fichiers) et __VERSION__ via scripts/inject-precache.mjs.
 const CACHE = "pianoflow-" + (self.__VERSION__ || "dev");
 const PRECACHE = self.__PRECACHE__ || [];
@@ -15,7 +15,7 @@ self.addEventListener("activate", (e) => e.waitUntil(
 ));
 self.addEventListener("fetch", (e) => {
   const req = e.request, url = new URL(req.url);
-  if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
+  if (req.method !== "GET" || url.origin !== location.origin) return;
   // fichiers à empreinte, samples et icônes : cache d'abord (ils ne changent pas sans changer de version de cache)
   const stable = url.pathname.includes("/assets/") || /piano-samples\.json$|icon-\d+\.png$/.test(url.pathname);
   e.respondWith((async () => {

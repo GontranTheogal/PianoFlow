@@ -1,6 +1,0 @@
-{
-  "appId": "com.pianoflow.app",
-  "appName": "PianoFlow",
-  "webDir": "dist",
-  "ios": { "contentInset": "always" }
-}

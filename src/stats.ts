@@ -1,4 +1,4 @@
-/** Records par morceau de la bibliothèque (synchronisés : uniquement des nombres, fusionnés par « le meilleur des deux »). */
+/** Records par morceau de la bibliothèque (uniquement des nombres, fusionnés par « le meilleur des deux »). */
 export interface SongStats { plays: number; bestAccuracy: number; /** meilleur score « en rythme », mains ensemble, à 100 % */ bestRhythm?: number; lastPlayed: number; }
 
 const KEY = "pianoflow-stats";

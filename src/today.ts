@@ -12,17 +12,16 @@ import * as Daily from "./daily";
 import * as Skills from "./skills";
 import { dayNum } from "./review";
 import { dueLessons } from "./recall";
+import { esc } from "./html";
 
 export interface TodayHost { go(action: string): void; }
 let host: TodayHost, root: HTMLElement;
 const GOAL_KEY = "pianoflow-goal";
 const goal = () => { try { return Number(localStorage.getItem(GOAL_KEY)) || 20; } catch { return 20; } };
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 export interface PlanItem { icon: string; title: string; detail: string; min: number; action: string; /** tâche cochée quand elle est faite (Daily) */ tag: string; /** rang de priorité quand le temps manque */ key?: string; }
 
 const unitDone = (p: ReturnType<typeof loadProgress>, id: string) => { const u = UNITS.find((x) => x.id === id); return !!u && u.lessons.every((l) => lessonDone(p, l.id)); };
-const unitStarted = (p: ReturnType<typeof loadProgress>, id: string) => { const u = UNITS.find((x) => x.id === id); return !!u && u.lessons.some((l) => lessonDone(p, l.id)); };
 
 /** Niveau de répertoire conseillé d'après le parcours (des leçons-repères, pour qu'une leçon ajoutée ne le fasse pas reculer). */
 export function repLevel(p = loadProgress()): number {

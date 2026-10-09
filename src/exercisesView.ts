@@ -7,6 +7,7 @@ import { improvDrill, IMPROV_LEVELS } from "./course/accomp";
 import { UNITS, LESSONS } from "./course/curriculum";
 import { loadProgress, isDone } from "./course/engine";
 import * as Skills from "./skills";
+import { esc } from "./html";
 
 export interface ExHost {
   startDrill(d: Drill): void;
@@ -31,7 +32,6 @@ export function suggestedLevel(k: string, p = loadProgress()): number {
 }
 /** Le niveau choisi à la main, sinon le niveau conseillé. */
 const lv = (k: string) => levels[k] ?? suggestedLevel(k);
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 interface Card { key: string; icon: string; color: string; title: string; text: string; levels?: string[]; action: string; }
 const CARDS: Card[] = [

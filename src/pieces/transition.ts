@@ -1,7 +1,7 @@
 /** Pièces de transition entre les niveaux : extraites des éditions Mutopia (domaine public), reprises dépliées,
  *  doigtés proposés par l'algorithme puis harmonisés (accords « standard », même doigté pour un accord répété). */
 import type { Tok } from "../course/build";
-import { s, de, e, q, dq, h, dh, w, e3, q3, spec, run, type RepPiece } from "./common";
+import { s, e, q, dq, h, dh, w, spec, run, type RepPiece } from "./common";
 
 // ───────── Bach (Cahier d'Anna Magdalena), Menuet en sol mineur, BWV Anh. 115 ─────────
 const MM_R1: Tok[] = [
