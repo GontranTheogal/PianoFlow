@@ -4,3 +4,4 @@ dist/
 tests/_*.ts
 .env
 .env.*
+.claude/
