@@ -1,5 +1,5 @@
 import { initMidi } from "./midi";
-import { loadScore, annotateHands, flatten, type Step, type Note, type Meter } from "./score";
+import { loadScore, annotateHands, flatten, preloadScoreEngine, type Step, type Note, type Meter } from "./score";
 import { RhythmJudge, type TimedNote, type RhythmSummary } from "./rhythm";
 import * as Coach from "./coach";
 import { repXml, repFileName, repById, repOfLevel, REPERTOIRE, SONGS, type RepPiece } from "./repertoire";
@@ -1233,6 +1233,7 @@ initMidi(onKey, (s) => {
 
 // ───────────── démarrage ─────────────
 try { LEGACY_KEYS.forEach((k) => localStorage.removeItem(k)); } catch { /* ignore */ }
+window.addEventListener("load", preloadScoreEngine, { once: true });
 Daily.startTracking();
 syncHeaderHeight();
 player.restart();

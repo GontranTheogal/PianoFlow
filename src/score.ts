@@ -1,5 +1,4 @@
-import createVerovioModule from "verovio/wasm";
-import { VerovioToolkit } from "verovio/esm";
+import type { VerovioToolkit } from "verovio/esm";
 import { unzipSync, strFromU8 } from "fflate";
 import localforage from "localforage";
 
@@ -7,7 +6,7 @@ export interface Note { id: string; pitch: number; hand: "R" | "L"; finger?: num
 export interface Step { time: number; notes: Note[]; }
 export interface MeasureStart { id: string; t: number; }
 
-let tk: VerovioToolkit | null = null;
+let tk: Promise<VerovioToolkit> | null = null;
 const svgCache = localforage.createInstance({ name: "pianoflow-svg" });
 /** Empreinte rapide d'un texte (FNV-1a). */
 function hash(s: string): string { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(36) + s.length.toString(36); }
@@ -19,9 +18,17 @@ async function storeSvg(key: string, svg: string) {
     await svgCache.setItem("_index", idx);
   } catch { /* cache plein : tant pis */ }
 }
-async function getToolkit() {
-  if (!tk) tk = new VerovioToolkit(await createVerovioModule());
+/** Verovio (≈ 7 Mo de WASM) n'est chargé qu'au premier besoin : l'appli s'affiche sans l'attendre. */
+function getToolkit(): Promise<VerovioToolkit> {
+  tk ??= Promise.all([import("verovio/wasm"), import("verovio/esm")])
+    .then(async ([wasm, esm]) => new esm.VerovioToolkit(await wasm.default()))
+    .catch((err) => { tk = null; throw err; });               // un échec réseau ne doit pas bloquer les essais suivants
   return tk;
+}
+/** Commence le chargement en arrière-plan (navigateur inactif), pour que la première partition s'ouvre vite. */
+export function preloadScoreEngine() {
+  const go = () => { getToolkit().catch(() => {}); };
+  if ("requestIdleCallback" in window) requestIdleCallback(go, { timeout: 5000 }); else setTimeout(go, 2000);
 }
 
 export interface Meter { tempo: number; beats: number; beatType: number; }
