@@ -1,0 +1,59 @@
+:root {
+  /* thème clair (par défaut) ; le thème sombre redéfinit les mêmes jetons plus bas */
+  --bg-0:#eef0f5; --bg-1:#ffffff; --bg-2:#f6f7fa;
+  --clay-1:#ffffff; --clay-2:#eef0f5; --clay-hi:#e4e7ef; --clay-3:#cdd2dd;
+  --line:#dde1ea; --text:#1d2433; --muted:#6b7385;
+  --brand-a:#f472b6; --brand-b:#a78bfa; --brand-c:#fbbf6b;
+  /* fonds teintés (succès, attention, orange, erreur, violet, bleu) et l'encre qui va dessus */
+  --tint-ok:#dcfce7; --tint-warn:#fef3c7; --tint-orange:#fff4e6; --tint-bad:#fee2e2; --tint-violet:#ede9fe; --tint-blue:#dbeafe;
+  --ink-ok:#15803d; --ink-warn:#b45309; --ink-orange:#c2410c; --ink-bad:#b91c1c; --ink-violet:#4c1d95; --ink-blue:#1d4ed8;
+  --score-ink:#000;
+  /* Couleurs d'usage (identiques sur la partition, le clavier et les notes qui tombent) */
+  --hand-r:#4aa3ff; --hand-l:#ff9f43; --ok:#22c55e; --bad:#ef4444; --accent:#f28a0d;
+  --gold:#fbbf24; --radius:26px; --radius-sm:16px;
+  --shadow-out: 0 4px 18px #1d243314;
+  --shadow-out-sm: 0 2px 8px #1d243312;
+  --shadow-in: inset 0 0 0 1px var(--line);
+  /* les mêmes jetons sous leur nom des vues */
+  --sf-bg:var(--bg-0); --sf-panel:var(--bg-1); --sf-ink:var(--text); --sf-mute:var(--muted); --sf-line:var(--line); --sf-chip:var(--clay-hi);
+  color-scheme:light;
+}
+/* thème sombre : choisi dans les réglages, ou celui de l'appareil en mode « Auto » */
+:root[data-theme="dark"] {
+  --bg-0:#13151a; --bg-1:#1c1f26; --bg-2:#181b21;
+  --clay-1:#1c1f26; --clay-2:#262a33; --clay-hi:#2c313b; --clay-3:#3a404c;
+  --line:#2f343e; --text:#e9ecf2; --muted:#9aa1b2;
+  --tint-ok:#123222; --tint-warn:#3a2d10; --tint-orange:#3a2414; --tint-bad:#3b1818; --tint-violet:#2a2342; --tint-blue:#172a45;
+  --ink-ok:#4ade80; --ink-warn:#fbbf24; --ink-orange:#fdba74; --ink-bad:#fca5a5; --ink-violet:#c4b5fd; --ink-blue:#93c5fd;
+  --score-ink:#e9ecf2;
+  --shadow-out: 0 4px 18px #0007; --shadow-out-sm: 0 2px 8px #0006;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg-0:#13151a; --bg-1:#1c1f26; --bg-2:#181b21;
+    --clay-1:#1c1f26; --clay-2:#262a33; --clay-hi:#2c313b; --clay-3:#3a404c;
+    --line:#2f343e; --text:#e9ecf2; --muted:#9aa1b2;
+    --tint-ok:#123222; --tint-warn:#3a2d10; --tint-orange:#3a2414; --tint-bad:#3b1818; --tint-violet:#2a2342; --tint-blue:#172a45;
+    --ink-ok:#4ade80; --ink-warn:#fbbf24; --ink-orange:#fdba74; --ink-bad:#fca5a5; --ink-violet:#c4b5fd; --ink-blue:#93c5fd;
+    --score-ink:#e9ecf2;
+    --shadow-out: 0 4px 18px #0007; --shadow-out-sm: 0 2px 8px #0006;
+    color-scheme:dark;
+  }
+}
+* { box-sizing:border-box; }
+/* partitions (Verovio) : encre noire en thème clair, claire en thème sombre */
+svg.definition-scale { color:var(--score-ink); fill:var(--score-ink); }
+body, html { margin:0; padding:0; height:100%; font-family:"Segoe UI", system-ui, -apple-system, sans-serif; color:var(--text); overflow:hidden; }
+body { background:var(--bg-0); -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; overscroll-behavior:none; }
+button { font-family:inherit; touch-action:manipulation; }
+::-webkit-scrollbar { width:10px; height:10px; } ::-webkit-scrollbar-thumb { background:var(--clay-3); border-radius:8px; }
+.hidden { display:none !important; }
+input[type=file] { display:none; }
+.grow { flex:1; }
+
+.clay { background:var(--clay-2); border:none; border-radius:var(--radius-sm); color:var(--text); box-shadow:none; transition:transform .15s, filter .15s; cursor:pointer; }
+.clay:hover { transform:translateY(-1px); filter:brightness(.98); } .clay:active { transform:none; box-shadow:var(--shadow-in); }
+.btn { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; font-size:13px; font-weight:600; }
+.btn.icon { padding:9px 12px; font-size:16px; }
+.btn.primary { background:var(--accent); color:#fff; }
