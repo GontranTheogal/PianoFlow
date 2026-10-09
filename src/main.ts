@@ -54,6 +54,10 @@ let meter: Meter = { tempo: 120, beats: 4, beatType: 4 };
 let listening = false;             // Apprendre : démo en cours (▶)
 let view: View = store.get("view", "flow") === "fall" ? "fall" : "flow";
 let showScoreInFall = store.get("scoreInFall", "1") === "1";
+/** Mode partition : clavier sous la partition (comme Flowkey) ou au-dessus. */
+let kbTop = store.get("kbPos", "bottom") === "top";
+/** Position du curseur de lecture, en fraction de la largeur : au tiers, on voit surtout ce qui vient. */
+const PLAYHEAD = 0.3;
 let fingerMode: FingerMode = (["auto", "all", "off"].includes(store.get("fingers", "auto")) ? store.get("fingers", "auto") : "auto") as FingerMode;
 let hasExplicitFingering = false;
 let lastExplicit: ExplicitFingering | null = null;      // doigtés écrits dans la partition ouverte (pour recalculer si on change de main)
@@ -349,7 +353,7 @@ function timeAtX(x: number): number {
 }
 function positionScore(t: number) {
   const vp = $("scoreViewport");
-  stageEl().style.transform = `translate3d(${(vp.clientWidth / 2 - xAtTime(t)).toFixed(2)}px,0,0)`;
+  stageEl().style.transform = `translate3d(${(vp.clientWidth * PLAYHEAD - xAtTime(t)).toFixed(2)}px,0,0)`;
 }
 function measureAtTime(t: number): number {
   if (!measuresL || !measuresL.length) return 0;
@@ -452,7 +456,7 @@ function handleTick(dt: number) {
   if (d.clientX > r.right - EDGE) v = Math.min(1, (d.clientX - (r.right - EDGE)) / EDGE);
   else if (d.clientX < r.left + EDGE) v = -Math.min(1, (r.left + EDGE - d.clientX) / EDGE);
   if (v) scrubTime = timeAtX(xAtTime(scrubTime) + Math.sign(v) * v * v * 1.3 * dt);   // jusqu'à ~1300 px/s, progressif
-  const x = d.clientX - (r.left + vp.clientWidth / 2 - xAtTime(scrubTime));            // position du doigt dans la partition
+  const x = d.clientX - (r.left + vp.clientWidth * PLAYHEAD - xAtTime(scrubTime));            // position du doigt dans la partition
   let best = 0, bd = Infinity;
   for (let k = 0; k <= measuresL.length; k++) { const dd = Math.abs(bx(k) - x); if (dd < bd) { bd = dd; best = k; } }
   if (d.which === "a") loopM.a = Math.min(best, loopM.b - 1); else loopM.b = Math.max(best, loopM.a + 1);
@@ -807,6 +811,7 @@ $("spdUp").addEventListener("click", () => setSpeed(speed + 10));
 function setView(v: View) {
   view = v; store.set("view", v);
   const pv = $("practiceView");
+  pv.style.setProperty("--playhead", PLAYHEAD * 100 + "%"); pv.classList.toggle("kb-top", kbTop);
   pv.classList.toggle("mode-flow", v === "flow"); pv.classList.toggle("mode-fall", v === "fall");
   document.querySelectorAll<HTMLElement>("#viewSeg button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
   layoutPractice();
@@ -825,7 +830,7 @@ function layoutPractice() {
   const H = pv.clientHeight, W = pv.clientWidth;
   const keyW = W / WHITE_COUNT;
   const natural = keyW * 5.6;
-  const pianoPx = view === "flow" ? Math.min(natural, H * 0.36) : Math.min(natural * 0.8, H * 0.27);
+  const pianoPx = view === "flow" ? Math.min(natural, H * (kbTop ? 0.36 : 0.3)) : Math.min(natural * 0.8, H * 0.27);   // sous la partition, le clavier lui laisse plus de place
   $("piano").style.height = Math.max(90, Math.round(pianoPx)) + "px";
   const box = $("scoreBox");
   if (view === "fall") {
@@ -1003,6 +1008,15 @@ namesBox.checked = store.get("names", "1") === "1";
 const applyNames = () => { piano.setShowNames(namesBox.checked); falling.setShowNames(namesBox.checked); };
 namesBox.addEventListener("change", () => { store.set("names", namesBox.checked ? "1" : "0"); applyNames(); });
 applyNames();
+{
+  const seg = $("kbPosSeg");
+  const paint = () => seg.querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", (b.dataset.kb === "top") === kbTop));
+  seg.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest("[data-kb]") as HTMLElement | null; if (!b) return;
+    kbTop = b.dataset.kb === "top"; store.set("kbPos", kbTop ? "top" : "bottom"); paint(); setView(view);
+  });
+  paint();
+}
 const fingerSel = $("fingerMode") as HTMLSelectElement;
 fingerSel.value = fingerMode;
 function setFingerMode(m: FingerMode) {

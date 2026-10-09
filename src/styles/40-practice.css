@@ -2,11 +2,14 @@
 #practiceView { position:relative; display:flex; flex-direction:column; height:calc(100vh - var(--header-h, 56px) - var(--tabbar-h, 0px)); height:calc(100dvh - var(--header-h, 56px) - var(--tabbar-h, 0px)); overflow:hidden; background:var(--pv-bg); }
 #practiceView.mode-flow { --pv-bg:var(--bg-0); --pv-panel:var(--bg-1); --pv-ink:var(--text); --pv-mute:var(--muted); --pv-line:var(--line); --pv-chip:var(--clay-2); }
 #practiceView.mode-fall { --pv-bg:#16171b; --pv-panel:#1e2025; --pv-ink:#eceef4; --pv-mute:#9aa1b2; --pv-line:#2c2f37; --pv-chip:#2a2d35; }
-.mode-flow #pianoBox { order:1 } .mode-flow #controls { order:2 } .mode-flow #coachBar, .mode-flow #fingerBar { order:2 } .mode-flow #scoreBox { order:3 } .mode-flow #fallingWrap { display:none }
+/* mode partition : la partition en haut, les commandes, puis le clavier (comme Flowkey) ; .kb-top remet le clavier au-dessus */
+.mode-flow #coachBar, .mode-flow #fingerBar { order:1 } .mode-flow #scoreBox { order:2 } .mode-flow #controls { order:3 } .mode-flow #pianoBox { order:4 } .mode-flow #fallingWrap { display:none }
+.mode-flow.kb-top #pianoBox { order:1 } .mode-flow.kb-top #controls, .mode-flow.kb-top #coachBar, .mode-flow.kb-top #fingerBar { order:2 } .mode-flow.kb-top #scoreBox { order:3 }
+.mode-flow:not(.kb-top) #controls { border-top:1px solid var(--pv-line); }
 .mode-fall #controls { order:1 } .mode-fall #coachBar, .mode-fall #fingerBar { order:1 } .mode-fall #scoreBox { order:2 } .mode-fall #fallingWrap { order:3 } .mode-fall #pianoBox { order:4 }
 
 #pianoBox { flex:none; background:linear-gradient(#030304, #17181b 70%); padding:0 0 env(safe-area-inset-bottom, 0px); }
-.mode-flow #pianoBox { padding-top:22px; border-bottom:1px solid #000; }
+.mode-flow.kb-top #pianoBox { padding-top:22px; border-bottom:1px solid #000; }
 #piano { width:100%; height:160px; } #piano svg { width:100%; height:100%; display:block; }
 .pk-ov { fill:transparent; pointer-events:none; }
 .exp-r .pk-ov { fill:var(--hand-r); fill-opacity:.88; } .exp-l .pk-ov { fill:var(--hand-l); fill-opacity:.9; }
@@ -58,7 +61,7 @@
 #score .done, #score .done * { fill:#9aa3b2 !important; stroke:#9aa3b2 !important; }
 #score .current.hand-r, #score .current.hand-r * { fill:var(--hand-r) !important; stroke:var(--hand-r) !important; }
 #score .current.hand-l, #score .current.hand-l * { fill:var(--hand-l) !important; stroke:var(--hand-l) !important; }
-#playheadLine { position:absolute; left:50%; top:0; bottom:0; width:30px; margin-left:-15px; border-radius:8px; pointer-events:none; z-index:5; background:rgba(110,120,140,.26); }
+#playheadLine { position:absolute; left:var(--playhead, 50%); top:0; bottom:0; width:30px; margin-left:-15px; border-radius:8px; pointer-events:none; z-index:5; background:rgba(110,120,140,.26); }
 .mode-fall #playheadLine { width:26px; margin-left:-13px; background:rgba(40,150,255,.38); border-radius:3px; }
 #measureHL { position:absolute; top:0; bottom:0; background:rgba(90,180,255,.2); pointer-events:none; display:none; }
 .mode-fall #measureHL { display:block; }
