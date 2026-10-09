@@ -77,7 +77,7 @@ function renderPath() {
       ${UNITS.map((u) => {
         const ls = LESSONS.filter((l) => l.unit === u);
         const full = ls.every((l) => isDone(prog, l.id));
-        return `<section class="cs-unit" id="unit-${u.id}"><header style="background:${u.color}"><span class="cs-uic">${esc(u.icon)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">⏩ Je connais déjà</button>`}</header>
+        return `<section class="cs-unit" id="unit-${u.id}"><header style="--c:${u.color}"><span class="cs-uic">${esc(u.icon)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">⏩ Je connais déjà</button>`}</header>
           <div class="cs-nodes">${ls.map((l) => {
             const done = isDone(prog, l.id), unlocked = isUnlocked(prog, ids(), l.index, prefs.unlockAll), isCur = l.index === cur;
             const s = prog.done[l.id]?.stars ?? 0, shift = NODE_SHIFT[l.inUnit % NODE_SHIFT.length];

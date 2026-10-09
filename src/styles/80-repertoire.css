@@ -12,7 +12,7 @@
 .cs-imp { text-align:center; margin:10px 0; } .cs-imp-chord { font-size:28px; letter-spacing:.04em; color:var(--muted); } .cs-imp-chord b { color:#db2777; font-size:34px; } .cs-imp small { display:block; color:#64748b; }
 .td-week p { margin:10px 0 0; font-size:14px; line-height:1.5; }
 .upd-banner { position:fixed; left:50%; bottom:20px; transform:translateX(-50%); z-index:9999; display:flex; gap:12px; align-items:center; background:#1d2433; color:#fff; border:none; border-radius:14px; padding:10px 14px; box-shadow:0 10px 30px #0008; font-size:14px; }
-.upd-banner button { background:var(--accent); color:#fff; border:0; border-radius:10px; padding:7px 14px; font-weight:700; cursor:pointer; }
+.upd-banner button { background:var(--primary); color:var(--on-primary); border:0; border-radius:10px; padding:7px 14px; font-weight:700; cursor:pointer; }
 .cs-reset { margin-top:10px; background:none; border:1px solid var(--line); color:var(--muted); border-radius:10px; padding:7px 10px; font-size:12.5px; cursor:pointer; width:100%; }
 .cs-reset:hover { color:var(--text); border-color:var(--clay-3); }
 .rep-intro { margin:-4px 0 14px; color:var(--muted); font-size:13.5px; line-height:1.5; max-width:820px; }

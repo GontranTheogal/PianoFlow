@@ -1,18 +1,33 @@
+/* Nunito Sans (OFL), embarquée : latin et latin étendu seulement (les autres jeux ne servent pas en français) */
+@font-face {
+  font-family:"Nunito Sans Variable"; font-style:normal; font-display:swap; font-weight:200 1000;
+  src:url("../../node_modules/@fontsource-variable/nunito-sans/files/nunito-sans-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family:"Nunito Sans Variable"; font-style:normal; font-display:swap; font-weight:200 1000;
+  src:url("../../node_modules/@fontsource-variable/nunito-sans/files/nunito-sans-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
 :root {
   /* thème clair (par défaut) ; le thème sombre redéfinit les mêmes jetons plus bas */
-  --bg-0:#eef0f5; --bg-1:#ffffff; --bg-2:#f6f7fa;
-  --clay-1:#ffffff; --clay-2:#eef0f5; --clay-hi:#e4e7ef; --clay-3:#cdd2dd;
-  --line:#dde1ea; --text:#1d2433; --muted:#6b7385;
-  --brand-a:#f472b6; --brand-b:#a78bfa; --brand-c:#fbbf6b;
+  --font:"Nunito Sans Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --bg-0:#f3f4f9; --bg-1:#ffffff; --bg-2:#f8f9fc;
+  --clay-1:#ffffff; --clay-2:#eceef5; --clay-hi:#e3e6f0; --clay-3:#c9cedb;
+  --line:#e0e3ec; --text:#1b1f2e; --muted:#596074;
+  /* marque : indigo (texte blanc dessus : 6,3:1). Aucune couleur de sens n'est indigo : mains bleu/orange, juste/faux vert/rouge */
+  --primary:#4f46e5; --primary-hover:#4338ca; --on-primary:#ffffff; --primary-tint:#eef0ff; --primary-ink:#4338ca; --focus:#4f46e5;
+  --accent:var(--primary);
+  --brand-a:#4f46e5; --brand-b:#7c3aed; --brand-c:#c026d3;
   /* fonds teintés (succès, attention, orange, erreur, violet, bleu) et l'encre qui va dessus */
-  --tint-ok:#dcfce7; --tint-warn:#fef3c7; --tint-orange:#fff4e6; --tint-bad:#fee2e2; --tint-violet:#ede9fe; --tint-blue:#dbeafe;
-  --ink-ok:#15803d; --ink-warn:#b45309; --ink-orange:#c2410c; --ink-bad:#b91c1c; --ink-violet:#4c1d95; --ink-blue:#1d4ed8;
+  --tint-ok:#dcfce7; --tint-warn:#fef3c7; --tint-orange:#fff1e6; --tint-bad:#fee2e2; --tint-violet:#ede9fe; --tint-blue:#dbeafe;
+  --ink-ok:#15803d; --ink-warn:#a35207; --ink-orange:#c2410c; --ink-bad:#b91c1c; --ink-violet:#4c1d95; --ink-blue:#1d4ed8;
   --score-ink:#000;
   /* Couleurs d'usage (identiques sur la partition, le clavier et les notes qui tombent) */
-  --hand-r:#4aa3ff; --hand-l:#ff9f43; --ok:#22c55e; --bad:#ef4444; --accent:#f28a0d;
-  --gold:#fbbf24; --radius:26px; --radius-sm:16px;
-  --shadow-out: 0 4px 18px #1d243314;
-  --shadow-out-sm: 0 2px 8px #1d243312;
+  --hand-r:#4aa3ff; --hand-l:#ff9f43; --ok:#22c55e; --bad:#ef4444;
+  --gold:#fbbf24; --radius:22px; --radius-sm:14px;
+  --shadow-out: 0 1px 2px #1b1f2e0d, 0 6px 20px #1b1f2e12;
+  --shadow-out-sm: 0 1px 2px #1b1f2e0d, 0 2px 8px #1b1f2e0f;
   --shadow-in: inset 0 0 0 1px var(--line);
   /* les mêmes jetons sous leur nom des vues */
   --sf-bg:var(--bg-0); --sf-panel:var(--bg-1); --sf-ink:var(--text); --sf-mute:var(--muted); --sf-line:var(--line); --sf-chip:var(--clay-hi);
@@ -20,33 +35,46 @@
 }
 /* thème sombre : choisi dans les réglages, ou celui de l'appareil en mode « Auto » */
 :root[data-theme="dark"] {
-  --bg-0:#13151a; --bg-1:#1c1f26; --bg-2:#181b21;
-  --clay-1:#1c1f26; --clay-2:#262a33; --clay-hi:#2c313b; --clay-3:#3a404c;
-  --line:#2f343e; --text:#e9ecf2; --muted:#9aa1b2;
+  --bg-0:#12131a; --bg-1:#1b1d27; --bg-2:#171922;
+  --clay-1:#1b1d27; --clay-2:#252835; --clay-hi:#2b2f3d; --clay-3:#3a3f50;
+  --line:#2e3240; --text:#eceef5; --muted:#a3a9bb;
+  --primary-tint:#25245a; --primary-ink:#b4bcfd; --focus:#a5b4fc;
   --tint-ok:#123222; --tint-warn:#3a2d10; --tint-orange:#3a2414; --tint-bad:#3b1818; --tint-violet:#2a2342; --tint-blue:#172a45;
   --ink-ok:#4ade80; --ink-warn:#fbbf24; --ink-orange:#fdba74; --ink-bad:#fca5a5; --ink-violet:#c4b5fd; --ink-blue:#93c5fd;
-  --score-ink:#e9ecf2;
-  --shadow-out: 0 4px 18px #0007; --shadow-out-sm: 0 2px 8px #0006;
+  --score-ink:#eceef5;
+  --shadow-out: 0 1px 2px #0006, 0 6px 20px #0005; --shadow-out-sm: 0 1px 2px #0006, 0 2px 8px #0004;
   color-scheme:dark;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --bg-0:#13151a; --bg-1:#1c1f26; --bg-2:#181b21;
-    --clay-1:#1c1f26; --clay-2:#262a33; --clay-hi:#2c313b; --clay-3:#3a404c;
-    --line:#2f343e; --text:#e9ecf2; --muted:#9aa1b2;
+    --bg-0:#12131a; --bg-1:#1b1d27; --bg-2:#171922;
+    --clay-1:#1b1d27; --clay-2:#252835; --clay-hi:#2b2f3d; --clay-3:#3a3f50;
+    --line:#2e3240; --text:#eceef5; --muted:#a3a9bb;
+    --primary-tint:#25245a; --primary-ink:#b4bcfd; --focus:#a5b4fc;
     --tint-ok:#123222; --tint-warn:#3a2d10; --tint-orange:#3a2414; --tint-bad:#3b1818; --tint-violet:#2a2342; --tint-blue:#172a45;
     --ink-ok:#4ade80; --ink-warn:#fbbf24; --ink-orange:#fdba74; --ink-bad:#fca5a5; --ink-violet:#c4b5fd; --ink-blue:#93c5fd;
-    --score-ink:#e9ecf2;
-    --shadow-out: 0 4px 18px #0007; --shadow-out-sm: 0 2px 8px #0006;
+    --score-ink:#eceef5;
+    --shadow-out: 0 1px 2px #0006, 0 6px 20px #0005; --shadow-out-sm: 0 1px 2px #0006, 0 2px 8px #0004;
     color-scheme:dark;
   }
+}
+/* fonds « forts » d'une couleur d'unité ou de main : même teinte, assez sombre pour du texte blanc (≥ 4,5:1) */
+:root { --hand-r-strong:#1d6fd1; --hand-l-strong:#b45309; }
+@supports (color: oklch(from red l c h)) {
+  * { --c-strong: oklch(from var(--c, #4f46e5) min(l, 0.52) c h); }
 }
 * { box-sizing:border-box; }
 /* partitions (Verovio) : encre noire en thème clair, claire en thème sombre */
 svg.definition-scale { color:var(--score-ink); fill:var(--score-ink); }
-body, html { margin:0; padding:0; height:100%; font-family:"Segoe UI", system-ui, -apple-system, sans-serif; color:var(--text); overflow:hidden; }
+body, html { margin:0; padding:0; height:100%; font-family:var(--font); color:var(--text); overflow:hidden; }
 body { background:var(--bg-0); -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none; overscroll-behavior:none; }
-button { font-family:inherit; touch-action:manipulation; }
+button, input, select, textarea { font-family:inherit; }
+button { touch-action:manipulation; }
+/* focus clavier toujours visible */
+:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+}
 ::-webkit-scrollbar { width:10px; height:10px; } ::-webkit-scrollbar-thumb { background:var(--clay-3); border-radius:8px; }
 .hidden { display:none !important; }
 input[type=file] { display:none; }
@@ -56,4 +84,4 @@ input[type=file] { display:none; }
 .clay:hover { transform:translateY(-1px); filter:brightness(.98); } .clay:active { transform:none; box-shadow:var(--shadow-in); }
 .btn { display:inline-flex; align-items:center; gap:6px; padding:9px 16px; font-size:13px; font-weight:600; }
 .btn.icon { padding:9px 12px; font-size:16px; }
-.btn.primary { background:var(--accent); color:#fff; }
+.btn.primary { background:var(--primary); color:var(--on-primary); } .btn.primary:hover { background:var(--primary-hover); }

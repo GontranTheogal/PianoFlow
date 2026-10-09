@@ -20,7 +20,7 @@ try {
   ok("démarrage : quatre onglets, séance du jour affichée");
 
   for (const tab of ["course", "exercises", "library"]) await page.click(`[data-tab="${tab}"]`);
-  assert.ok((await page.locator(".rep-card").count()) > 0);
+  await page.locator(".rep-card").first().waitFor({ timeout: 5000 });   // rendu asynchrone (bibliothèque en IndexedDB)
   ok("onglets : parcours, exercices, morceaux");
 
   await page.click("#toggleSettings");
