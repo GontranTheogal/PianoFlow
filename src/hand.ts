@@ -1,6 +1,8 @@
 /** Profil de main : les mesures de l'utilisateur, qui règlent les écarts jugés confortables par l'algorithme de doigté.
  *  Géométrie d'un vrai clavier (largeur d'une touche blanche 2,35 cm), distances en cm. */
 
+import { writeJson } from "./storage";
+
 export interface HandProfile {
   /** Envergure : distance pouce → auriculaire, main à plat et bien ouverte, bout des doigts (cm). Adulte : 17 à 24. */
   span: number;
@@ -75,6 +77,6 @@ export function loadHand(): HandProfile {
 }
 export function saveHand(h: HandProfile): HandProfile {
   const v = sanitizeHand({ ...h, updatedAt: Date.now() });
-  try { localStorage.setItem(STORE, JSON.stringify(v)); } catch { /* ignore */ }
+  writeJson(STORE, v);
   return v;
 }

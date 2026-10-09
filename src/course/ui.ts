@@ -12,6 +12,7 @@ import { record as recordSkill } from "../skills";
 import { dueLessons, recallQuestions, recordRecall, origin as recallOrigin } from "../recall";
 import type { Q, Show, Audio, Unit } from "./types";
 import { esc } from "../html";
+import { readJson, writeJson } from "../storage";
 
 export interface CourseHost {
   play(pitch: number, ms?: number): void;
@@ -27,8 +28,8 @@ export interface Drill { key: string; title: string; color: string; icon: string
 
 const UI_KEY = "pianoflow-course-ui";
 interface UiPrefs { unlockAll: boolean; names: boolean; }
-const loadPrefs = (): UiPrefs => { try { return { unlockAll: false, names: false, ...JSON.parse(localStorage.getItem(UI_KEY) || "{}") }; } catch { return { unlockAll: false, names: false }; } };
-const savePrefs = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(prefs)); } catch { /* ignore */ } };
+const loadPrefs = (): UiPrefs => ({ unlockAll: false, names: false, ...readJson(UI_KEY, {}) });
+const savePrefs = () => { writeJson(UI_KEY, prefs); };
 
 let host: CourseHost, root: HTMLElement, kbd: MiniKeyboard | null = null;
 let prefs = loadPrefs(), prog: Progress = loadProgress(), active = false;
@@ -504,7 +505,7 @@ function finishLesson() {
 }
 
 const DRILL_KEY = "pianoflow-drills";
-export function drillStats(): Record<string, { best: number; runs: number; last: number }> { try { return JSON.parse(localStorage.getItem(DRILL_KEY) || "{}"); } catch { return {}; } }
+export function drillStats(): Record<string, { best: number; runs: number; last: number }> { return readJson<Record<string, { best: number; runs: number; last: number }>>(DRILL_KEY, {}); }
 /** Révision express du jour (séance du jour) : null s'il n'y a rien à revoir. */
 export function recallDrill(): Drill | null {
   const lessons = dueLessons(loadProgress());
@@ -530,7 +531,7 @@ function finishDrill(r: Run, accuracy: number) {
   if (r.drill!.key === "recall") { finishRecall(r, accuracy); return; }
   const d = r.drill!, all = drillStats(), prev = all[d.key];
   all[d.key] = { best: Math.max(prev?.best ?? 0, accuracy), runs: (prev?.runs ?? 0) + 1, last: Math.max(prev?.last ?? 0, Number(dayKey().replace(/-/g, ""))) };
-  try { localStorage.setItem(DRILL_KEY, JSON.stringify(all)); } catch { /* ignore */ }
+  writeJson(DRILL_KEY, all);
   markDone("drill:" + d.key.replace(/-\d+$/, "")); recordSkill(d.key.replace(/-\d+$/, ""), accuracy);
   // révision espacée : un exercice raté revient dans la séance du jour
   if (accuracy < 80) reviewFail(`d|${d.key}`, `exercice · ${d.title}`, `ex:${d.key.replace(/-\d+$/, "")}`);

@@ -2,6 +2,7 @@
  *  Une note est repérée par sa POSITION SUR LA PORTÉE : 0 = ligne du bas, 1 = premier interligne,
  *  2 = 2e ligne… (négatif = sous la portée, > 8 = au-dessus). Une clé donne la note de la ligne du bas. */
 
+import { readJson, writeJson } from "./storage";
 export type Clef = "G" | "F";
 export type ClefMode = "G" | "F" | "GF";
 export interface SNote { clef: Clef; pos: number; alter: -1 | 0 | 1; }
@@ -109,9 +110,10 @@ export interface Progress { levels: Record<string, { best: number; rounds: numbe
 const KEY = "pianoflow-solfege";
 export const levelKey = (mode: ClefMode, run: string) => `${mode}:${run}`;
 export function loadProgress(): Progress {
-  try { const p = JSON.parse(localStorage.getItem(KEY) || ""); return { levels: p.levels ?? {}, items: p.items ?? {} }; } catch { return { levels: {}, items: {} }; }
+  const p = readJson<any>(KEY, null); if (p == null) return { levels: {}, items: {} };
+  return { levels: p.levels ?? {}, items: p.items ?? {} };
 }
-export function saveProgress(p: Progress) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch { /* ignore */ } }
+export function saveProgress(p: Progress) { writeJson(KEY, p); }
 /** Poids de départ d'un tirage d'après l'historique : les notes souvent ratées reviennent plus. */
 export function weightsFrom(p: Progress): Record<string, number> {
   const w: Record<string, number> = {};

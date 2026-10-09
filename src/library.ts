@@ -1,4 +1,5 @@
 import localforage from 'localforage';
+import { readJson, writeJson } from "./storage";
 
 export interface LibraryEntry { name: string; fileData: ArrayBuffer; addedAt: number; favorite: boolean; difficulty: number; /** ce qui rend le morceau difficile (calculé sur cet appareil) */ why?: string[]; }
 const KEY = "pianoflow-library";
@@ -46,11 +47,11 @@ export async function renameSong(oldName: string, newName: string) {
     }
     // Transfert des statistiques (scores) pour ne pas les perdre
     const statsKey = "pianoflow-stats";
-    const stats: any = JSON.parse(localStorage.getItem(statsKey) || "{}");
+    const stats: any = readJson<any>(statsKey, {});
     if (stats[oldName]) {
       stats[newName] = stats[oldName];
       delete stats[oldName];
-      localStorage.setItem(statsKey, JSON.stringify(stats));
+      writeJson(statsKey, stats);
     }
   } catch (err) { console.error(err); }
 }

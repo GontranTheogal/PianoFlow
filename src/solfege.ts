@@ -4,6 +4,7 @@ import { MiniKeyboard } from "./miniKeyboard";
 import { markDone } from "./daily";
 import { record as recordSkill } from "./skills";
 import { esc } from "./html";
+import { readJson, writeJson } from "./storage";
 
 /** Mode solfège : apprendre la clé de Sol et la clé de Fa, avec ou sans piano.
  *  Notes aléatoires (toute la portée, lignes supplémentaires comprises), par manche de 10 ou en continu.
@@ -17,7 +18,7 @@ const PREF_KEY = "pianoflow-solfege-ui";
 const SPEED: Record<Pace, number> = { wait: 0, slow: 0.28, mid: 0.5, fast: 0.85 }; // notes par seconde
 function loadPrefs(): UiPrefs {
   const d: UiPrefs = { clef: "G", input: "screen", run: "round", pace: "wait" };
-  try { return { ...d, ...JSON.parse(localStorage.getItem(PREF_KEY) || "{}") }; } catch { return d; }
+  return { ...d, ...readJson(PREF_KEY, {}) };
 }
 export const PC_FR = ["Do", "Do♯", "Ré", "Ré♯", "Mi", "Fa", "Fa♯", "Sol", "Sol♯", "La", "La♯", "Si"];
 const NAMES7 = ["Do", "Ré", "Mi", "Fa", "Sol", "La", "Si"];
@@ -26,7 +27,7 @@ let host: SolfegeHost, root: HTMLElement, body: HTMLElement, kbdBox: HTMLElement
 let prefs = loadPrefs(), prog = C.loadProgress();
 let active = false;
 const playNote = (p: number) => host.play(p, 900);
-const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch { /* ignore */ } };
+const savePrefs = () => { writeJson(PREF_KEY, prefs); };
 const pitchRange = (pitches: number[]): [number, number] => {
   const lo = Math.floor(Math.min(...pitches) / 12) * 12; let hi = Math.floor(Math.max(...pitches) / 12) * 12 + 12;
   if (hi - lo < 24) hi = lo + 24;

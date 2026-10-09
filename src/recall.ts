@@ -9,6 +9,7 @@ import type { Progress } from "./course/engine";
 import type { Q } from "./course/types";
 import { mulberry32 } from "./course/build";
 import { dayNum } from "./review";
+import { readJson, writeJson } from "./storage";
 
 export const RECALL_KEY = "pianoflow-recall";
 const GAPS = [1, 3, 7, 14, 30, 60];
@@ -16,8 +17,8 @@ const GAPS = [1, 3, 7, 14, 30, 60];
 const PER_LESSON = 2, MAX_LESSONS = 4;
 export interface RecallRec { /** boîte 0-5 */ box: number; /** jour (n° depuis 1970) où elle revient */ due: number; /** dernière mise à jour (ms) */ t: number; }
 
-function load(): Record<string, RecallRec> { try { return JSON.parse(localStorage.getItem(RECALL_KEY) || "{}"); } catch { return {}; } }
-function save(all: Record<string, RecallRec>) { try { localStorage.setItem(RECALL_KEY, JSON.stringify(all)); } catch { /* ignore */ } }
+function load(): Record<string, RecallRec> { return readJson<Record<string, RecallRec>>(RECALL_KEY, {}); }
+function save(all: Record<string, RecallRec>) { writeJson(RECALL_KEY, all); }
 
 /** Ce qui se révise en une question : ni les explications, ni les morceaux entiers, ni l'improvisation. */
 const gradable = (q: Q) => q.k !== "info" && q.k !== "piece" && q.k !== "improv";

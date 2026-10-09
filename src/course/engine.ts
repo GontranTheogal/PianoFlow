@@ -1,6 +1,7 @@
 /** Moteur du parcours : progression, déblocage linéaire, étoiles, série quotidienne, déroulé d'une leçon (file de questions façon Duolingo),
  *  validation des réponses et notation du rythme. Pur : aucun accès au DOM (la progression utilise localStorage si présent). */
 import type { Q } from "./types";
+import { readJson, writeJson } from "../storage";
 
 // ───────────── progression (uniquement des nombres et des listes : fusionnable entre appareils par « le meilleur des deux ») ─────────────
 export interface Progress {
@@ -21,11 +22,12 @@ export function applyReset<T extends Partial<Progress>>(p: T, reset = Math.max(p
   return { ...p, done, xp: (p.resetAt ?? 0) >= reset ? p.xp ?? 0 : xp, resetAt: reset };
 }
 export function loadProgress(): Progress {
-  try { const p = applyReset(JSON.parse(localStorage.getItem(PROGRESS_KEY) || "")); return { ...emptyProgress(), ...p, done: p.done ?? {}, days: p.days ?? [] }; } catch { return emptyProgress(); }
+  const raw = readJson<any>(PROGRESS_KEY, null); if (raw == null) return emptyProgress();
+  try { const p = applyReset(raw); return { ...emptyProgress(), ...p, done: p.done ?? {}, days: p.days ?? [] }; } catch { return emptyProgress(); }   // données abîmées
 }
 /** Recommencer le parcours depuis le début (les jours de pratique et la série sont gardés). */
 export function resetCourse(now = Date.now()) { const p = loadProgress(); saveProgress({ ...emptyProgress(), days: p.days, resetAt: now }); }
-export function saveProgress(p: Progress) { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch { /* ignore */ } }
+export function saveProgress(p: Progress) { writeJson(PROGRESS_KEY, p); }
 
 export const starsFor = (accuracy: number) => (accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : 1);
 export const dayKey = (d: Date = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
