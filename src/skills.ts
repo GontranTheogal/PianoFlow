@@ -15,8 +15,8 @@ export interface SkillRec { /** maîtrise 0-100 */ m: number; /** nombre de rés
 
 export type Family = "lecture" | "rythme" | "oreille" | "technique" | "pedale" | "impro";
 export const FAMILIES: Record<Family, { label: string; icon: string }> = {
-  lecture: { label: "Lecture", icon: "🎼" }, rythme: { label: "Rythme", icon: "🥁" }, oreille: { label: "Oreille", icon: "👂" },
-  technique: { label: "Technique", icon: "✋" }, pedale: { label: "Pédale", icon: "🦶" }, impro: { label: "Improvisation", icon: "🎷" },
+  lecture: { label: "Lecture", icon: "music-4" }, rythme: { label: "Rythme", icon: "drum" }, oreille: { label: "Oreille", icon: "ear" },
+  technique: { label: "Technique", icon: "hand" }, pedale: { label: "Pédale", icon: "footprints" }, impro: { label: "Improvisation", icon: "music-2" },
 };
 export interface Skill { key: string; label: string; family: Family; /** proposé tel quel dans la séance du jour (sinon : travaillé par une autre étape) */ practice: boolean; unlock: () => string; }
 

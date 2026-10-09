@@ -11,7 +11,7 @@ const six = (prompt: string, pattern: number[], hint?: string) => rhythm(prompt,
 const T = 2 / 3;   // croche de triolet
 
 export const RHYTHM2_UNIT: Unit = {
-  id: "ur2", title: "Le rythme, suite", sub: "Doubles croches, triolets, 6/8", icon: "🥁", color: "#8b5cf6", lessons: [
+  id: "ur2", title: "Le rythme, suite", sub: "Doubles croches, triolets, 6/8", icon: "drum", color: "#8b5cf6", lessons: [
     L("ur2-l1", "Les doubles croches", ["Jouer quatre notes égales dans un temps"], (rng) => [
       info("Quatre notes par temps", "Coupe une croche en deux : tu obtiens deux doubles croches (deux crochets, ou deux barres quand elles sont groupées). Quatre doubles croches font un temps, comme une noire.\n\nPour les placer, découpe chaque temps en quatre en disant « ti-ki-ti-ki ». Commence lentement : la régularité compte plus que la vitesse.", undefined),
       mc(rng, "Combien de doubles croches dans une noire ?", "4", ["2", "8"], "Une noire = 2 croches = 4 doubles croches."),

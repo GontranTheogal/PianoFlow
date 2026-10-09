@@ -8,6 +8,7 @@ import { UNITS, LESSONS } from "./course/curriculum";
 import { loadProgress, isDone } from "./course/engine";
 import * as Skills from "./skills";
 import { esc } from "./html";
+import { iconOrText } from "./icons";
 import { readJson, writeJson } from "./storage";
 
 export interface ExHost {
@@ -36,17 +37,17 @@ const lv = (k: string) => levels[k] ?? suggestedLevel(k);
 
 interface Card { key: string; icon: string; color: string; title: string; text: string; levels?: string[]; action: string; }
 const CARDS: Card[] = [
-  { key: "reading", icon: "🎼", color: "#34d399", title: "Lecture de notes", text: "Des notes au hasard en clé de Sol et de Fa : les lire vite et sans compter. 5 minutes par jour suffisent.", action: "Ouvrir" },
-  { key: "sight", icon: "👀", color: "#38bdf8", title: "Déchiffrage", text: "Un petit morceau inédit à chaque fois, à jouer en rythme du premier coup, sans s'arrêter : le meilleur entraînement à la lecture.", levels: X.SIGHT_LEVELS.map((l) => l.label), action: "Nouveau morceau" },
-  { key: "rhythm", icon: "🥁", color: "#a78bfa", title: "Rythme", text: "Lire un rythme et le taper au métronome, des noires jusqu'aux triolets et au 6/8.", levels: X.RHYTHM_LEVELS.map((l) => l.label), action: "Commencer" },
-  { key: "intervals", icon: "👂", color: "#f472b6", title: "Oreille · intervalles", text: "Reconnaître l'écart entre deux notes, avec un air connu comme repère pour chacun.", levels: ["Tierce, quinte, octave", "+ seconde, quarte, tierce mineure", "Tous (jusqu'à l'octave)"], action: "Commencer" },
-  { key: "chords", icon: "👂", color: "#fb7185", title: "Oreille · accords", text: "Majeur ou mineur ? Puis diminué et augmenté. Entendre la couleur d'un accord.", levels: ["Majeur / mineur", "+ diminué", "+ augmenté"], action: "Commencer" },
-  { key: "echo", icon: "🔁", color: "#f59e0b", title: "Oreille · écho", text: "L'appli joue une courte mélodie : rejoue-la sur ton clavier. Relie l'oreille aux doigts.", levels: X.ECHO_LEVELS.map((l) => l.label), action: "Commencer" },
-  { key: "pedal", icon: "🦶", color: "#4ade80", title: "Pédale", text: "Changer la pédale de sustain à chaque accord, sans mélange ni trou. Après chaque passage, un dessin montre ce qu'a fait ton pied. (Pédale branchée sur le clavier MIDI.)", levels: PEDAL_LEVELS, action: "Commencer" },
-  { key: "fingers", icon: "🖐️", color: "#fbbf24", title: "Trouver ses doigtés", text: "Sans doigté écrit : trouver la position de la main d'après l'étendue de la phrase, puis placer les passages du pouce. Et jouer avec ce doigté.", levels: FINGER_LEVELS, action: "Commencer" },
-  { key: "improv", icon: "🎷", color: "#f472b6", title: "Improviser", text: "L'appli joue une grille d'accords, tu inventes une mélodie avec les touches allumées (pentatonique, puis blues). Aucune fausse note possible : le but est d'oser.", levels: IMPROV_LEVELS, action: "Commencer" },
-  { key: "five", icon: "✋", color: "#fb923c", title: "Cinq doigts, 12 tonalités", text: "La position de base dans chaque tonalité, majeur puis mineur, mains ensemble : pour que toutes les touches deviennent familières.", action: "Ouvrir" },
-  { key: "tech", icon: "🎹", color: "#4ade80", title: "Gammes, arpèges, accords", text: "La théorie et les doigtés de chaque tonalité, « construis-la », et l'entraînement en partition.", action: "Ouvrir" },
+  { key: "reading", icon: "music-4", color: "#34d399", title: "Lecture de notes", text: "Des notes au hasard en clé de Sol et de Fa : les lire vite et sans compter. 5 minutes par jour suffisent.", action: "Ouvrir" },
+  { key: "sight", icon: "eye", color: "#38bdf8", title: "Déchiffrage", text: "Un petit morceau inédit à chaque fois, à jouer en rythme du premier coup, sans s'arrêter : le meilleur entraînement à la lecture.", levels: X.SIGHT_LEVELS.map((l) => l.label), action: "Nouveau morceau" },
+  { key: "rhythm", icon: "drum", color: "#a78bfa", title: "Rythme", text: "Lire un rythme et le taper au métronome, des noires jusqu'aux triolets et au 6/8.", levels: X.RHYTHM_LEVELS.map((l) => l.label), action: "Commencer" },
+  { key: "intervals", icon: "ear", color: "#f472b6", title: "Oreille · intervalles", text: "Reconnaître l'écart entre deux notes, avec un air connu comme repère pour chacun.", levels: ["Tierce, quinte, octave", "+ seconde, quarte, tierce mineure", "Tous (jusqu'à l'octave)"], action: "Commencer" },
+  { key: "chords", icon: "ear", color: "#fb7185", title: "Oreille · accords", text: "Majeur ou mineur ? Puis diminué et augmenté. Entendre la couleur d'un accord.", levels: ["Majeur / mineur", "+ diminué", "+ augmenté"], action: "Commencer" },
+  { key: "echo", icon: "repeat", color: "#f59e0b", title: "Oreille · écho", text: "L'appli joue une courte mélodie : rejoue-la sur ton clavier. Relie l'oreille aux doigts.", levels: X.ECHO_LEVELS.map((l) => l.label), action: "Commencer" },
+  { key: "pedal", icon: "footprints", color: "#4ade80", title: "Pédale", text: "Changer la pédale de sustain à chaque accord, sans mélange ni trou. Après chaque passage, un dessin montre ce qu'a fait ton pied. (Pédale branchée sur le clavier MIDI.)", levels: PEDAL_LEVELS, action: "Commencer" },
+  { key: "fingers", icon: "hand", color: "#fbbf24", title: "Trouver ses doigtés", text: "Sans doigté écrit : trouver la position de la main d'après l'étendue de la phrase, puis placer les passages du pouce. Et jouer avec ce doigté.", levels: FINGER_LEVELS, action: "Commencer" },
+  { key: "improv", icon: "music-2", color: "#f472b6", title: "Improviser", text: "L'appli joue une grille d'accords, tu inventes une mélodie avec les touches allumées (pentatonique, puis blues). Aucune fausse note possible : le but est d'oser.", levels: IMPROV_LEVELS, action: "Commencer" },
+  { key: "five", icon: "hand", color: "#fb923c", title: "Cinq doigts, 12 tonalités", text: "La position de base dans chaque tonalité, majeur puis mineur, mains ensemble : pour que toutes les touches deviennent familières.", action: "Ouvrir" },
+  { key: "tech", icon: "piano", color: "#4ade80", title: "Gammes, arpèges, accords", text: "La théorie et les doigtés de chaque tonalité, « construis-la », et l'entraînement en partition.", action: "Ouvrir" },
 ];
 
 /** Quand un exercice devient utile : la leçon du parcours qui le débloque (premier = début d'unité, dernier = unité finie). */
@@ -88,11 +89,11 @@ function render() {
         ${c.levels ? `<label class="ex-lv">Niveau <select data-lv="${c.key}">${c.levels.map((l, i) => `<option value="${i + 1}" ${lv(c.key) === i + 1 ? "selected" : ""}>${i + 1} · ${esc(l)}${i + 1 === sug ? " (conseillé)" : ""}</option>`).join("")}</select></label>` : ""}
         ${c.key === "five" ? `<label class="ex-lv">Tonalité <select data-five>${MAJOR_KEYS.map((k, i) => `<option value="${i}" ${lv("five") - 1 === i ? "selected" : ""}>${esc(nameOf(k))} majeur</option>`).join("")}</select></label>` : ""}`;
   };
-  const card = (c: Card, i: number) => `<div class="ex-card" style="--c:${c.color}"><div class="ex-top"><span class="ex-n">${i + 1}</span><span class="ex-ic">${c.icon}</span><b>${esc(c.title)}</b></div>${status(c.key)}${body(c)}
+  const card = (c: Card, i: number) => `<div class="ex-card" style="--c:${c.color}"><div class="ex-top"><span class="ex-n">${i + 1}</span><span class="ex-ic">${iconOrText(c.icon, esc)}</span><b>${esc(c.title)}</b></div>${status(c.key)}${body(c)}
         <div class="ex-foot"><button class="ex-go" data-go="${c.key}">${esc(c.action)}</button></div></div>`;
   // les autres : une ligne chacun (dépliable), les utiles d'abord, puis ceux qui viendront avec le parcours
   const rows = CARDS.filter((c) => !rec.includes(c.key)).sort((a, b) => Number(!!unitAfter(a.key)) - Number(!!unitAfter(b.key)) || (stateOf(b.key)?.need ?? 0) - (stateOf(a.key)?.need ?? 0));
-  const row = (c: Card) => `<details class="ex-row" style="--c:${c.color}" data-row="${c.key}" ${openRow === c.key ? "open" : ""}><summary><span class="ex-ic">${c.icon}</span><b>${esc(c.title)}</b>${status(c.key)}</summary>
+  const row = (c: Card) => `<details class="ex-row" style="--c:${c.color}" data-row="${c.key}" ${openRow === c.key ? "open" : ""}><summary><span class="ex-ic">${iconOrText(c.icon, esc)}</span><b>${esc(c.title)}</b>${status(c.key)}</summary>
         <div class="ex-rowbody">${body(c)}<div class="ex-foot"><button class="ex-go" data-go="${c.key}">${esc(c.action)}</button></div></div></details>`;
   root.innerHTML = `<div class="ex-wrap"><div class="ex-head"><h1>Exercices</h1><p>${rec.length ? "Fais-les dans l'ordre : ils sont choisis d'après ce que tu maîtrises le moins, au niveau conseillé. Le reste est rangé en dessous." : "Commence par le parcours : les exercices utiles apparaîtront ici au fur et à mesure."}</p></div>
     ${rec.length ? `<h3 class="ex-sec">À faire maintenant</h3><div class="ex-grid">${rec.map((k, i) => card(CARDS.find((c) => c.key === k)!, i)).join("")}</div>` : ""}

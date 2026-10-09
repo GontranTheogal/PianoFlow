@@ -31,6 +31,7 @@ import * as X from "./exercises";
 import * as T from "./techCore";
 import { setKeyboardRange, rangeForNotes, WHITE_COUNT } from "./keyboardLayout";
 import { esc } from "./html";
+import { icon } from "./icons";
 import { removeKey } from "./storage";
 import { $, store, toast, cleanName } from "./app/dom";
 import { initLibraryView, renderLibraryHome, openByName, openRepertoire } from "./app/libraryView";
@@ -216,7 +217,7 @@ function renderFingerBar() {
   if (!fSel || !allNotes.includes(fSel)) fSel = here[0] ?? allNotes[0] ?? null;
   const edits = FE.editsFor(songName), edited = !!fSel && edits.has(keyOf(fSel));
   const chips = (here.includes(fSel!) ? here : fSel ? [fSel] : []).map((n) => `<button data-fn="${n.id}" class="fb-note ${n.hand === "R" ? "r" : "l"} ${n === fSel ? "on" : ""}">${noteName(n.pitch)} · ${n.hand === "R" ? "MD" : "MG"}</button>`).join("");
-  bar.innerHTML = `<b>✍️ Doigtés</b><span class="fb-notes">${chips}</span>
+  bar.innerHTML = `<b>${icon("pen-line")} Doigtés</b><span class="fb-notes">${chips}</span>
     ${fSel ? `<span class="fb-f">${[1, 2, 3, 4, 5].map((f) => `<button data-ff="${f}" class="${fSel!.finger === f ? (edited ? "on ed" : "on") : ""}">${f}</button>`).join("")}${edited ? `<button data-ff="0" title="Rendre cette note à l'algorithme">Auto</button>` : ""}</span>` : ""}
     <button data-fnext class="fb-txt">Suivante →</button>
     <small>${edits.size ? `${edits.size} correction${edits.size > 1 ? "s" : ""} · vert = corrigé` : "Touche une note, choisis le doigt : le reste du passage s'adapte."}</small>
@@ -637,7 +638,7 @@ const coachNext = (c: CoachRun) => Coach.nextTarget(c.prog, c.secs, c.stages, c.
 const coachRatio = (c: CoachRun) => Coach.progressRatio(c.prog, c.secs, c.stages, c.full, c.parts, c.partStages);
 /** Libellé court d'une étape du coach. */
 function coachLabel(c: CoachRun, t: Coach.CoachTarget): string {
-  if (t.kind === "done") return "Morceau appris 🎉";
+  if (t.kind === "done") return `Morceau appris ${icon("party-popper")}`;
   if (t.kind === "full") return t.stage.label;
   if (t.kind === "part") return `Partie ${t.index + 1}/${c.parts.length} · mes. ${t.section.a + 1}–${t.section.b} · ${t.stage.label}`;
   return `Section ${t.index + 1}/${c.secs.length} · mes. ${t.section.a + 1}–${t.section.b} · ${t.stage.label}`;
@@ -655,7 +656,7 @@ function coachStart() {
   coach = { id: songName, secs, stages, parts, partStages, full, prog, target: { kind: "done" } };
   coach.target = coachNext(coach);
   coachApply();
-  if (!prog.pct) toast("🎧 Commence par écouter le morceau en entier (bouton 🎧 du coach) : savoir comment il doit sonner aide énormément.", 4200);
+  if (!prog.pct) toast("Commence par écouter le morceau en entier (bouton du coach) : savoir comment il doit sonner aide énormément.", 4200);
 }
 function coachStop() { coach = null; loopM = null; applyLoop(); renderCoach(); }
 /** Met le moteur dans la configuration de l'étape visée (boucle, main, mode, vitesse). */
@@ -663,7 +664,7 @@ function coachApply() {
   const c = coach; if (!c) return;
   hideResult(); coachJustPassed = false;
   const t = c.target;
-  if (t.kind === "done") { loopM = null; applyLoop(); setHand("both"); renderCoach(); toast("🎉 Morceau appris ! Rejoue-le en rythme pour le garder en mémoire.", 3500); return; }
+  if (t.kind === "done") { loopM = null; applyLoop(); setHand("both"); renderCoach(); toast("Morceau appris ! Rejoue-le en rythme pour le garder en mémoire.", 3500); return; }
   setHand(t.stage.hand); setAppMode(t.stage.mode); setSpeed(t.stage.speed);
   if (t.kind === "section" || t.kind === "part") setLoopMeasures(t.section.a, t.section.b);
   else { loopM = null; applyLoop(); follower.goTo(0); }
@@ -702,8 +703,8 @@ passListeners.push((r) => {
 });
 function coachPassNote(_r: PassResult): { passed: boolean; html: string } | null {
   const c = coach; if (!c) return null;
-  const nxt = c.target.kind === "done" ? "morceau terminé 🎉" : coachLabel(c, c.target);
-  return coachJustPassed ? { passed: true, html: `🎯 Étape validée ! Suivante : <b>${nxt}</b>` } : { passed: false, html: `🎯 Objectif de l'étape : <b>${c.target.kind === "done" ? "—" : c.target.stage.pass + " %"}</b> (${c.target.kind === "done" ? "" : c.target.stage.label}). Rejoue, ou ralentis.` };
+  const nxt = c.target.kind === "done" ? `morceau terminé ${icon("party-popper")}` : coachLabel(c, c.target);
+  return coachJustPassed ? { passed: true, html: `${icon("target")} Étape validée ! Suivante : <b>${nxt}</b>` } : { passed: false, html: `${icon("target")} Objectif de l'étape : <b>${c.target.kind === "done" ? "—" : c.target.stage.pass + " %"}</b> (${c.target.kind === "done" ? "" : c.target.stage.label}). Rejoue, ou ralentis.` };
 }
 function renderCoach() {
   const bar = $("coachBar"), c = coach;
@@ -717,10 +718,10 @@ function renderCoach() {
   const opts = groups.map((g, gi) => Array.from({ length: g.s1 - g.s0 }, (_, k) => secOpt(g.s0 + k)).join("")
       + (c.parts.length ? `<option value="p${gi}" ${t.kind === "part" && t.index === gi ? "selected" : ""}>↳ Enchaîner la partie ${gi + 1} (mes. ${g.a + 1}–${g.b}) ${dots(c.prog.part?.[String(gi)] ?? 0, c.partStages.length)}</option>` : "")).join("")
     + `<option value="full" ${t.kind === "full" ? "selected" : ""}>Morceau entier ${dots(c.prog.full, c.full.length)}</option>`;
-  bar.innerHTML = `<span class="cb-ic">🎯</span><div class="cb-main"><b>${label}</b>${t.kind === "done" ? "" : `<small>objectif ${t.stage.pass} % · ${t.stage.mode === "rhythm" ? "appuie sur ▶ pour le décompte" : "joue la section, elle recommence en boucle"}</small>`}
+  bar.innerHTML = `<span class="cb-ic">${icon("target")}</span><div class="cb-main"><b>${label}</b>${t.kind === "done" ? "" : `<small>objectif ${t.stage.pass} % · ${t.stage.mode === "rhythm" ? "appuie sur ▶ pour le décompte" : "joue la section, elle recommence en boucle"}</small>`}
     <div class="cb-bar"><i style="width:${Math.round(ratio * 100)}%"></i></div></div>
     <select id="coachSel" title="Choisir une section"><option value="auto">Prochaine étape</option>${opts}</select>
-    <button id="coachListen" title="Écouter le morceau en entier, lentement, avant de le travailler">🎧</button><button id="coachRe" title="Remettre la configuration de l'étape">↺</button>${t.kind === "done" ? "" : `<button id="coachSkip" title="Je sais déjà faire cette étape : la valider sans la jouer">⏭</button>`}<button id="coachOff" title="Quitter le coach">✕</button>`;
+    <button id="coachListen" title="Écouter le morceau en entier, lentement, avant de le travailler" aria-label="Écouter le morceau en entier, lentement, avant de le travailler">${icon("headphones")}</button><button id="coachRe" title="Remettre la configuration de l'étape">↺</button>${t.kind === "done" ? "" : `<button id="coachSkip" title="Je sais déjà faire cette étape : la valider sans la jouer" aria-label="Je sais déjà faire cette étape : la valider sans la jouer">${icon("skip-forward")}</button>`}<button id="coachOff" title="Quitter le coach">✕</button>`;
   bar.classList.remove("hidden");
   layoutPractice();
 }
@@ -777,7 +778,7 @@ function showResult(r: PassResult, hook: { pass: number; counts: boolean; need: 
     <p class="rc-sub">${r.mode === "rhythm" ? `En rythme · ${r.speed} %` : "Pas à pas"}${r.hand !== "both" ? ` · main ${r.hand === "R" ? "droite" : "gauche"}` : ""}${r.loop ? ` · mesures ${r.loop.a + 1}–${r.loop.b}` : ""}</p>
     ${s ? `<div class="rc-chips"><span class="ok">✓ ${s.perfect + s.good} dans le temps</span><span class="off">↶ ${s.early} en avance</span><span class="off">↷ ${s.late} en retard</span><span class="bad">✗ ${s.miss} manquées</span><span class="bad">${s.wrong} fausses</span></div>` : ""}
     ${s && s.weak.length ? `<p class="rc-weak">À retravailler : ${s.weak.map((m) => `<button data-weak="${m}">mesure ${m + 1}</button>`).join(" ")}</p>` : ""}
-    ${r.pedal ? `<p class="rc-pedal">🦶 Pédale : <b>${r.pedal.ok}/${r.pedal.total}</b> indications respectées${r.pedal.late ? ` · ${r.pedal.late} en retard` : ""}${r.pedal.missing ? ` · ${r.pedal.missing} oubliée${r.pedal.missing > 1 ? "s" : ""}` : ""}${r.pedal.ok < r.pedal.total ? " — au signe « Ped. », le pied remonte en jouant et redescend juste après." : ""}</p>` : pieceMarks.length && r.mode === "rhythm" ? `<p class="rc-pedal">🦶 Ce morceau indique la pédale : branche-la, l'appli notera aussi ton pied.</p>` : ""}
+    ${r.pedal ? `<p class="rc-pedal">${icon("footprints")} Pédale : <b>${r.pedal.ok}/${r.pedal.total}</b> indications respectées${r.pedal.late ? ` · ${r.pedal.late} en retard` : ""}${r.pedal.missing ? ` · ${r.pedal.missing} oubliée${r.pedal.missing > 1 ? "s" : ""}` : ""}${r.pedal.ok < r.pedal.total ? " — au signe « Ped. », le pied remonte en jouant et redescend juste après." : ""}</p>` : pieceMarks.length && r.mode === "rhythm" ? `<p class="rc-pedal">${icon("footprints")} Ce morceau indique la pédale : branche-la, l'appli notera aussi ton pied.</p>` : ""}
     <p class="rc-advice">${advice}</p>${need}${coachNote ? `<div class="rc-coach ${coachNote.passed ? "ok" : ""}">${coachNote.html}</div>` : ""}
     <div class="rc-btns">${passed ? `<button class="pri" data-rc="back">Retour à la leçon</button>` : ""}${coachNote?.passed ? `<button class="pri" data-rc="next">Étape suivante</button>` : ""}${returnTo === "today" && !coachNote?.passed ? `<button class="pri" data-rc="today">Séance du jour →</button>` : ""}<button class="${passed || coachNote?.passed || returnTo === "today" ? "" : "pri"}" data-rc="again">Rejouer</button>${r.mode === "rhythm" ? `<button data-rc="${r.score >= 90 && r.speed < 100 ? "faster" : "slower"}">${r.score >= 90 && r.speed < 100 ? "Plus vite" : "Plus lent"}</button>` : ""}<button data-rc="close">Fermer</button></div>`;
   $("resultCard").classList.remove("hidden");
@@ -1033,7 +1034,7 @@ function onKey(pitch: number, velocity: number, on: boolean) {
     const exp = follower.expected.find((n) => n.pitch === pitch);
     const ok = follower.noteOn(pitch);
     if (ok) { hits++; if (exp) falling.burst(exp); piano.press(pitch, "ok"); }
-    else { misses++; piano.press(pitch, "bad"); toast("❌ " + noteName(pitch), 700); }
+    else { misses++; piano.press(pitch, "bad"); toast(noteName(pitch), 700); }
     pianoSig = "";
   } else piano.press(pitch, "ok");                            // pendant la démo ▶ : simple retour visuel
 }
@@ -1043,7 +1044,7 @@ let pedalEvents: { t: number; down: boolean }[] = [], pieceMarks: PedalMark[] = 
 initMidi(onKey, (s) => {
   // le nom du clavier plutôt qu'un « connecté » générique : on voit tout de suite si c'est bien le sien
   const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
-  el.innerHTML = `<span>🎹</span> <b>${esc(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok");
+  el.innerHTML = `<span>${icon("piano")}</span> <b>${esc(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok");
 },
   (cc, v) => { if (cc !== 64) return; const was = sustain; sustain = v >= 64; coursePedal(sustain); if (run && was !== sustain) pedalEvents.push({ t: player.playhead, down: sustain }); });
 
@@ -1067,7 +1068,7 @@ function showUpdateBanner() {
   if (document.getElementById("updBanner")) return;
   const b = document.createElement("div");
   b.id = "updBanner"; b.className = "upd-banner";
-  b.innerHTML = `<span>✨ Nouvelle version de PianoFlow disponible</span><button>Recharger</button>`;
+  b.innerHTML = `<span>${icon("sparkles")} Nouvelle version de PianoFlow disponible</span><button>Recharger</button>`;
   b.querySelector("button")!.addEventListener("click", () => location.reload());
   document.body.appendChild(b);
 }

@@ -8,6 +8,7 @@ import { xmlDifficulty } from "../difficultyXml";
 import { repLevel } from "../today";
 import { LESSONS } from "../course/curriculum";
 import { esc } from "../html";
+import { icon } from "../icons";
 import { $, toast, cleanName } from "./dom";
 import type { OpenFile, OpenOpts, ViewName } from "./types";
 
@@ -56,7 +57,7 @@ export async function renderLibraryHome() {
     const status = best >= 90 ? `<span class="rep-ok">✓ maîtrisé (${best} %)</span>` : pct ? `<span class="rep-prog">coach ${pct} %</span>` : "";
     return `<div class="rep-card"><div class="rep-top"><b>${esc(p.title)}</b><small>${esc(p.composer)}</small></div>
       <span class="diff-slot" data-diff="${p.id}"></span><p class="rep-skills">${esc(p.skills)}</p><div class="rep-bar"><i style="width:${Math.max(pct, best >= 90 ? 100 : 0)}%"></i></div>${status}
-      <div class="rep-btns"><button class="btn clay primary" data-rep="${p.id}" data-coach="1" title="${esc(p.tip)}">🎯 Apprendre</button><button class="btn clay" data-rep="${p.id}">▶ Jouer</button></div></div>`;
+      <div class="rep-btns"><button class="btn clay primary" data-rep="${p.id}" data-coach="1" title="${esc(p.tip)}">${icon("target")} Apprendre</button><button class="btn clay" data-rep="${p.id}">▶ Jouer</button></div></div>`;
   }).join("")}</div>`;
   // difficultés calculées après l'affichage, une carte à la fois (mise en cache)
   const slots = Array.from(rep.querySelectorAll<HTMLElement>("[data-diff]"));
@@ -81,12 +82,12 @@ export async function renderLibraryHome() {
       <div class="song-info">
         <div class="song-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
           <span class="title-text" style="overflow:hidden;text-overflow:ellipsis;cursor:pointer;min-width:0;">${title}</span>
-          <span style="display:flex;gap:6px;flex:none;margin-left:8px"><button class="mini-btn edit-btn" title="Renommer">✏️</button><button class="mini-btn danger song-del" title="Supprimer">🗑</button></span>
+          <span style="display:flex;gap:6px;flex:none;margin-left:8px"><button class="mini-btn edit-btn" title="Renommer" aria-label="Renommer">${icon("pencil")}</button><button class="mini-btn danger song-del" title="Supprimer" aria-label="Supprimer">${icon("trash-2")}</button></span>
         </div>
         <div class="song-meta">${diffChip(Math.min(5, Math.max(1, e.difficulty || 1)), e.why)}</div>
         <div class="rep-bar"><i style="width:${Math.max(cpct, (st?.bestRhythm ?? 0) >= 90 ? 100 : 0)}%"></i></div>
         ${(st?.bestRhythm ?? 0) >= 90 ? `<span class="rep-ok">✓ maîtrisé (${st!.bestRhythm} %)</span>` : cpct ? `<span class="rep-prog">coach ${cpct} %</span>` : `<span class="rep-prog muted">pas encore commencé</span>`}
-        <div class="rep-btns"><button class="btn clay primary coach-btn" title="Apprendre avec le coach : section par section, mains séparées puis ensemble, puis en rythme">🎯 Apprendre</button><button class="btn clay play-btn">▶ Jouer</button></div>
+        <div class="rep-btns"><button class="btn clay primary coach-btn" title="Apprendre avec le coach : section par section, mains séparées puis ensemble, puis en rythme">${icon("target")} Apprendre</button><button class="btn clay play-btn">▶ Jouer</button></div>
       </div>`;
     const open = (coach = false) => app.openFile(new File([e.fileData || (e as any).xml], e.name), { coach, tag: "piece" });
     card.querySelector(".song-cover")!.addEventListener("click", (ev) => { if ((ev.target as HTMLElement).closest(".fav-btn")) return; open(); });

@@ -16,7 +16,7 @@ const pressName = (rng: Rng, idx: number[], n: number): Q[] => drawN(rng, idx, n
 
 // ───────────────────────── 1. Le clavier ─────────────────────────
 const u1: Unit = {
-  id: "u1", title: "Le clavier", sub: "Se repérer sans jamais se perdre", icon: "🎹", color: "#f472b6", lessons: [
+  id: "u1", title: "Le clavier", sub: "Se repérer sans jamais se perdre", icon: "piano", color: "#f472b6", lessons: [
     L("u1-l1", "Touches blanches et noires", ["Reconnaître les groupes de 2 et de 3 touches noires"], (rng) => [
       info("Un motif qui se répète", "Les touches noires vont par groupes : deux, puis trois, puis deux, puis trois… Ce dessin se répète sur tout le piano. C'est ton repère pour ne jamais te perdre.", { marks: [...markKeys([61, 63], "sel"), ...markKeys([66, 68, 70], "target")] }, kb(60, 72)),
       ...drawN(rng, [0, 1, 0, 1, 0, 1], 6).map((g) => g === 0
@@ -54,7 +54,7 @@ const u1: Unit = {
 
 // ───────────────────────── 2. Main droite ─────────────────────────
 const u2: Unit = {
-  id: "u2", title: "Main droite", sub: "Cinq doigts, cinq notes", icon: "✋", color: "#fb923c", lessons: [
+  id: "u2", title: "Main droite", sub: "Cinq doigts, cinq notes", icon: "hand", color: "#fb923c", lessons: [
     L("u2-l1", "Numérote tes doigts", ["Associer chaque doigt à son numéro"], (rng) => {
       const fingers: [string, number][] = [["le pouce", 1], ["l'index", 2], ["le majeur", 3], ["l'annulaire", 4], ["l'auriculaire (petit doigt)", 5]];
       return [
@@ -88,7 +88,7 @@ const u2: Unit = {
 
 // ───────────────────────── 3. Main gauche ─────────────────────────
 const u3: Unit = {
-  id: "u3", title: "Main gauche", sub: "La main qu'on néglige à tort", icon: "🤚", color: "#facc15", lessons: [
+  id: "u3", title: "Main gauche", sub: "La main qu'on néglige à tort", icon: "hand", color: "#facc15", lessons: [
     L("u3-l1", "Position de Do, main gauche", ["Poser la main gauche sur Do Ré Mi Fa Sol graves"], (rng) => [
       info("La main gauche en miroir", "À gauche, tout est inversé : le petit doigt (5) joue le Do grave, et le pouce (1) le Sol. Les numéros montent donc quand tu descends vers les graves : 5-Do · 4-Ré · 3-Mi · 2-Fa · 1-Sol.",
         { badges: [5, 4, 3, 2, 1].map((f, i) => ({ m: 48 + [0, 2, 4, 5, 7][i], t: String(f), hand: "L" as const })) }, kb(46, 62)),
@@ -120,7 +120,7 @@ const u3: Unit = {
 
 // ───────────────────────── 4. Clé de Sol ─────────────────────────
 const u4: Unit = {
-  id: "u4", title: "Lire en clé de Sol", sub: "La portée de la main droite", icon: "🎼", color: "#34d399", lessons: [
+  id: "u4", title: "Lire en clé de Sol", sub: "La portée de la main droite", icon: "music-4", color: "#34d399", lessons: [
     L("u4-l1", "La portée et la clé de Sol", ["Compter les lignes et les interlignes", "Lire Do Ré Mi Fa Sol"], (rng) => [
       info("La portée", "Cinq lignes, quatre interlignes, qu'on compte du bas vers le haut. La clé de Sol s'enroule autour de la 2e ligne : c'est la ligne du Sol. Plus la note est haute sur la portée, plus elle est aiguë sur le clavier.", { staff: { clef: "G", evs: [note(P("G4"), 8)] } }, KB_RH),
       info("Le Do central", "Le Do central s'écrit sous la portée, sur une petite ligne en plus (« ligne supplémentaire »). Ensuite Ré dans l'espace sous la 1re ligne, Mi sur la 1re ligne, Fa dans le 1er interligne, Sol sur la 2e ligne.", { staff: { clef: "G", evs: ["C4", "D4", "E4", "F4", "G4"].map((n) => note(P(n), 2)), labels: ["Do", "Ré", "Mi", "Fa", "Sol"] } }, KB_RH),
@@ -143,7 +143,7 @@ const u4: Unit = {
 
 // ───────────────────────── 5. Clé de Fa ─────────────────────────
 const u5: Unit = {
-  id: "u5", title: "Lire en clé de Fa", sub: "La portée de la main gauche", icon: "🎶", color: "#38bdf8", lessons: [
+  id: "u5", title: "Lire en clé de Fa", sub: "La portée de la main gauche", icon: "music-2", color: "#38bdf8", lessons: [
     L("u5-l1", "La clé de Fa", ["Reconnaître la clé de Fa", "Lire Do Ré Mi Fa Sol graves"], (rng) => [
       info("La clé de Fa", "Les deux points de la clé de Fa entourent la 4e ligne : c'est la ligne du Fa. Cette clé sert aux notes graves, jouées par la main gauche. La position de Do de ta main gauche (Do3 à Sol3) se lit dans le haut de la portée.", { staff: { clef: "F", evs: [note(P("F3"), 8)] } }, KB_LH),
       info("Do Ré Mi Fa Sol graves", "Do3 se trouve dans le 2e interligne (en comptant depuis le bas), juste sous la 3e ligne. Les cinq notes de ta position : Do – Ré – Mi – Fa – Sol.", { staff: { clef: "F", evs: ["C3", "D3", "E3", "F3", "G3"].map((n) => note(P(n), 2)), labels: ["Do", "Ré", "Mi", "Fa", "Sol"] } }, KB_LH),
@@ -171,7 +171,7 @@ const u5: Unit = {
 // ───────────────────────── 6. Rythme ─────────────────────────
 const rhythm = (prompt: string, pattern: number[], bpm: number, hint?: string): Q => ({ k: "rhythm", prompt, pattern, bpm, hint });
 const u6: Unit = {
-  id: "u6", title: "Le rythme", sub: "Durer le bon temps", icon: "🥁", color: "#a78bfa", lessons: [
+  id: "u6", title: "Le rythme", sub: "Durer le bon temps", icon: "drum", color: "#a78bfa", lessons: [
     L("u6-l1", "La pulsation et la noire", ["Sentir la pulsation", "Jouer des noires régulières"], (rng) => [
       info("La pulsation", "Sous toute musique bat un pouls régulier : la pulsation, ou « temps ». La noire est la note qui dure un temps. Écoute le métronome : tu auras quatre clics de préparation, puis tape (n'importe quelle touche, la barre espace, ou touche le bouton) à chaque noire.", undefined),
       rhythm("Tape quatre noires", [2, 2, 2, 2], 66),
@@ -293,7 +293,7 @@ const u7: Unit = {
 const C = (k: string) => ({ li: "CDEFGAB".indexOf(k[0]), alter: k[1] === "b" ? -1 : k[1] === "#" ? 1 : 0 });
 const qualityPcs = (root: { li: number; alter: number }, q: "maj" | "min") => chordPitches(root, 4, q);
 const u8: Unit = {
-  id: "u8", title: "Les accords", sub: "Plusieurs notes à la fois", icon: "🎹", color: "#fb7185", lessons: [
+  id: "u8", title: "Les accords", sub: "Plusieurs notes à la fois", icon: "piano", color: "#fb7185", lessons: [
     L("u8-l1", "Qu'est-ce qu'un accord ?", ["Savoir ce qu'est une triade", "Jouer Do–Mi–Sol ensemble"], (rng) => [
       info("Empiler des tierces", "Un accord, ce sont plusieurs notes jouées en même temps. Le plus courant, la triade, empile trois notes séparées chacune d'une tierce : Do – Mi – Sol. Elle s'écrit sur trois lignes consécutives (ou trois interlignes).", { ...chordShow("G", qualityPcs(C("C"), "maj")), marks: markKeys([60, 64, 67], "sel") }, KB_RH),
       info("À quoi sert un accord ?", "La mélodie, c'est ce qu'on chante ; l'accord, c'est le décor sur lequel elle se pose. La même mélodie sonne joyeuse sur un accord majeur, triste sur un mineur, tendue sur une septième : changer d'accord, c'est changer l'émotion sans toucher à l'air.\n\nLa règle d'or : les notes importantes de la mélodie (celles des temps forts, celles qu'on tient longtemps) font presque toujours partie de l'accord du moment. C'est ce qui permet de choisir un accord pour accompagner une chanson : on y revient dans les leçons suivantes.", undefined),
@@ -354,7 +354,7 @@ const u8: Unit = {
 // ───────────────────────── 9. Gamme de Do ─────────────────────────
 const scaleXml = (key: typeof MAJOR_KEYS[number], oct: 1 | 2, dir: "up" | "updown") => buildPieceXml({ type: "scale", key, form: "major", octaves: oct, direction: dir }, 66);
 const u9: Unit = {
-  id: "u9", title: "La gamme de Do majeur", sub: "Passer le pouce, enfin", icon: "🪜", color: "#4ade80", lessons: [
+  id: "u9", title: "La gamme de Do majeur", sub: "Passer le pouce, enfin", icon: "trending-up", color: "#4ade80", lessons: [
     L("u9-l1", "La recette d'une gamme", ["Connaître la suite ton–ton–demi-ton", "Jouer Do–Do avec une seule main sans doigtés imposés"], (rng) => [
       info("Une gamme, à quoi ça sert ?", "Une gamme, ce sont les notes d'une tonalité rangées dans l'ordre, de la tonique (la note « maison ») jusqu'à son octave. Un morceau en Do majeur utilise presque uniquement ces 7 notes : la gamme est sa palette.\n\nOn la travaille pour trois raisons : les doigts apprennent les chemins qu'on retrouve dans tous les morceaux (montées, descentes, passages du pouce) ; l'oreille apprend où est la maison ; et on lit plus vite, parce qu'on reconnaît des bouts de gamme dans les partitions au lieu de lire chaque note.", undefined),
       info("Ton et demi-ton", "Une gamme majeure suit toujours la recette : Ton – Ton – ½ ton – Ton – Ton – Ton – ½ ton. Un demi-ton, ce sont deux touches voisines (blanches ou noires) sans rien entre elles ; un ton en vaut deux. Dans Do majeur, les demi-tons sont entre Mi–Fa et Si–Do.", { staff: { clef: "G", evs: ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"].map((n) => note(P(n), 2)), labels: ["1", "2", "3", "4", "5", "6", "7", "8"] } }, KB_RH),
@@ -388,7 +388,7 @@ const C0 = MAJOR_KEYS[0];
 const cmaj = chordPitches({ li: 0, alter: 0 }, 4, "maj");
 const INV_LABEL = ["position fondamentale", "1er renversement", "2e renversement"];
 const ua: Unit = {
-  id: "ua", title: "Arpège de Do et renversements", sub: "Les notes de l'accord, dans tous les sens", icon: "🌊", color: "#14b8a6", lessons: [
+  id: "ua", title: "Arpège de Do et renversements", sub: "Les notes de l'accord, dans tous les sens", icon: "waves", color: "#14b8a6", lessons: [
     L("ua-l1", "L'arpège de Do", ["Jouer l'arpège de Do majeur sur une puis deux octaves"], (rng) => [
       info("Pourquoi des arpèges ?", "Plaquer un accord, c'est un bloc de son. Le dérouler note par note, c'est ce que font la plupart des accompagnements : le Prélude en Do de Bach, la Lettre à Élise, la main gauche des ballades pop, la Sonate « Clair de lune »… Travailler l'arpège apprend à la main à s'ouvrir sur l'accord et à passer le pouce par-dessus de grands écarts, sans à-coups.", undefined),
       info("Un accord qui se déroule", "L'arpège, c'est l'accord joué note par note : Do – Mi – Sol – Do. Main droite : doigts 1 – 2 – 3 – 5 ; main gauche : 5 – 3 – 2 – 1. Sur deux octaves, le pouce passe sous la main comme dans la gamme, mais les sauts sont plus grands : garde le poignet souple et laisse la main accompagner chaque note.", { staff: { clef: "G", evs: ["C4", "E4", "G4", "C5"].map((n) => note(P(n), 2)), labels: ["Do", "Mi", "Sol", "Do"] } }, KB_RH),

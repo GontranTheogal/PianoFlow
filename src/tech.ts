@@ -12,6 +12,7 @@ import { DEFAULT_WEIGHTS } from "./fingerCore";
 import { FINGERING_MODEL, FINGERING_WEIGHTS, FINGERING_FEATURES } from "./fingeringModel";
 import { loadHand } from "./hand";
 import { esc } from "./html";
+import { icon } from "./icons";
 import { readJson, writeJson } from "./storage";
 
 /** Gammes & arpèges : comprendre (armure, recette en tons/demi-tons, doigtés, partition), jouer sur le clavier,
@@ -105,7 +106,7 @@ async function render() {
     <p class="sf-text">Ouvre la pièce dans l'entraînement : partition, notes qui tombent, mode attente avec ton piano, <b>main droite / main gauche séparément</b>, tempo et boucle.</p>
     <div class="tc-ctrl">${seg("oct", [["1", "1 octave"], ["2", "2 octaves"]], String(st.oct))}${seg("dir", [["up", "Montée"], ["updown", "Montée + descente"]], st.dir)}
       ${seg("bpm", [["56", "Lent"], ["72", "Moyen"], ["96", "Vif"]], String(st.bpm))}</div>
-    <div class="sf-actions"><button class="sf-btn pri" id="tcOpen">🎹 Ouvrir dans l'entraînement</button></div>
+    <div class="sf-actions"><button class="sf-btn pri" id="tcOpen">${icon("piano")} Ouvrir dans l'entraînement</button></div>
   </div>`;
   renderBuild();
   showOnKeyboard();
@@ -146,7 +147,7 @@ function renderBuild() {
   if (!build) {
     box.innerHTML = `<h2>À toi de jouer : construis-la</h2>
       <p class="sf-text">Retrouve ${arp ? "les 4 notes de l'arpège" : "les 8 notes de la gamme"} de <b>${esc(T.pieceTitle(p).replace(/^(Gamme|Arpège) de /, ""))}</b> en montant, sans aide : l'appli te dit pourquoi si tu te trompes. Joue sur le clavier du bas (à l'écran ou avec ton piano).</p>
-      <div class="sf-actions"><button class="sf-btn pri" id="tcStart">Commencer</button><button class="sf-btn" id="tcRandom">🎲 Tonalité au hasard</button></div>`;
+      <div class="sf-actions"><button class="sf-btn pri" id="tcStart">Commencer</button><button class="sf-btn" id="tcRandom">${icon("dice")} Tonalité au hasard</button></div>`;
     return;
   }
   const sizes = T.stepSizes(p);
@@ -154,7 +155,7 @@ function renderBuild() {
     <div class="tc-chips">${exp.map((pt, i) => `<span class="tc-chip ${i < build!.idx ? "done" : i === build!.idx ? "cur" : ""}">${i < build!.idx ? esc(T.nameOf(pt)) : i === build!.idx ? "?" : "·"}</span>`).join("")}</div>
     <div class="sf-big" id="tcFb">${build.done ? `<b class="ok">Bravo ✓</b> <small>${esc(T.pieceTitle(p))} en ${Math.round((performance.now() - build.t0) / 1000)} s.</small>`
       : build.idx === 0 ? `Joue la <b>tonique</b> : la note qui donne son nom (${esc(T.nameOf(exp[0]))}).` : `Après <b>${esc(T.nameOf(exp[build.idx - 1]))}</b>, monte de ${esc(T.sizeWords(sizes[build.idx - 1]))}.`}</div>
-    <div class="sf-actions"><button class="sf-btn" id="tcStart">Recommencer</button><button class="sf-btn" id="tcRandom">🎲 Tonalité au hasard</button>${build.done ? "" : `<button class="sf-btn" id="tcShow">💡 Montre-moi</button>`}<button class="sf-btn" id="tcLeave">Quitter l'exercice</button></div>`;
+    <div class="sf-actions"><button class="sf-btn" id="tcStart">Recommencer</button><button class="sf-btn" id="tcRandom">${icon("dice")} Tonalité au hasard</button>${build.done ? "" : `<button class="sf-btn" id="tcShow">${icon("lightbulb")} Montre-moi</button>`}<button class="sf-btn" id="tcLeave">Quitter l'exercice</button></div>`;
 }
 function startBuild() { build = { idx: 0, last: -1, t0: performance.now(), done: false }; const [lo, hi] = rangeFor("R"); kbd.setRange(lo, hi); kbd.clear(); kbd.clearLabels(); kbd.showNames(true); renderBuild(); }
 function buildPress(m: number) {
