@@ -18,8 +18,6 @@ export interface Difficulty {
   /** mesures brutes (étalonnage) */ raw?: Record<string, number>;
 }
 export const LEVEL_LABEL = ["", "Débutant", "Facile", "Élémentaire", "Intermédiaire", "Avancé"];
-/** Repère indicatif (examens de piano type ABRSM / conservatoire 1er cycle). */
-export const LEVEL_HINT = ["", "premiers mois", "≈ 1re année · grade 1", "≈ 2e-3e année · grades 2-3", "≈ 4e-5e année · grades 4-5", "fin de 1er cycle et au-delà · grade 6+"];
 
 /** 0 en dessous de `a`, 1 au-dessus de `b`, linéaire entre les deux. */
 const ramp = (x: number, a: number, b: number) => Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -159,7 +157,3 @@ export function pieceFromSteps(steps: Step[], bpm: number, fifths = 0): DPiece {
   return { notes, bpm, fifths };
 }
 
-/** Compatibilité : la note 1-5 rangée dans la bibliothèque. */
-export function computeDifficulty(steps: Step[], bpm = 100, fifths = 0): number {
-  return rateDifficulty(pieceFromSteps(steps, bpm, fifths)).level;
-}

@@ -146,7 +146,6 @@ const labEnd = (last: boolean): Tok[] => [
   ["R", e], ["E4+Bb4+C5", e, "145"], ["E4+Bb4+C5", q, "145"], ["R", e], ["C4+F4+A4", e, "124"], ["C4+F4+A4", e, "124"], ["C4+F4+A4", e, "124"],
   ["R", e], ["D4+G4", e, "14"], ["R", e], ["Bb3+C4", e, "12"], ["R", e], ["A3+C4+F4", e, "124"], ["A3+C4+F4", e, "124"], last ? ["R", e] : ["C4", e, 1, "f ("],
 ];
-const H8 = rep(4, [["H", w]] as Tok[]);
 const LAB_R1: Tok[] = [["R", e], ...labA(["Bb3+C4+E4", e, "124"]), ["E4+G4+C5", q, "125"], ...labA(["E4+Bb4+C5", e, "145"]), ["E4+G4+C5", e, "125"], ["C4", e, 1, "f ("],
   ...LAB_MEL, ...labEnd(false), ...LAB_MEL, ...labEnd(true)];
 const LAB_R2: Tok[] = [["H", e], ...rep(8, [["H", w]] as Tok[]), ...LAB_ACC, ...rep(2, [["H", w]] as Tok[]), ...LAB_ACC, ...rep(2, [["H", w]] as Tok[])];

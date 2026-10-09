@@ -1,9 +1,9 @@
 /** Unités 10 et suivantes : une tonalité à la fois (armure, gamme, arpège, accords, enchaînements), puis septièmes et cadences. */
-import { pieceNotes, midiOf as tMidi, armureText, relativeText, thumbNotes, nameOf as tName, type Piece, type KeyDef } from "../techCore";
+import { pieceNotes, midiOf as tMidi, armureText, relativeText, thumbNotes, nameOf as tName, type KeyDef } from "../techCore";
 import { P, M, kbFor, info, shuffle, drawN, note, piece, seqFromPiece, pieceFrom, type Rng } from "./build";
 import { mc } from "./foundations";
 import { progression, chordQ, ROMAN, type Step } from "./pieces";
-import { MAJOR_KEYS, MINOR_KEYS, degreeChord, keyLabel, keyTonic, midiOf, chordName, nameOf, chordPitches, type Quality } from "./theory";
+import { MAJOR_KEYS, MINOR_KEYS, degreeChord, keyLabel, keyTonic, chordName, nameOf, chordPitches } from "./theory";
 import type { Lesson, Unit, Q } from "./types";
 
 const L = (id: string, title: string, goals: string[], build: (rng: Rng) => Q[]): Lesson => ({ id, title, goals, build });

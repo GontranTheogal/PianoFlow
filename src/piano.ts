@@ -1,4 +1,4 @@
-import { FIRST, LAST, WW, TOTAL_WIDTH, BLACK_RATIO, keyGeometry, isBlack } from "./keyboardLayout";
+import { FIRST, LAST, TOTAL_WIDTH, BLACK_RATIO, keyGeometry, isBlack } from "./keyboardLayout";
 import { noteName } from "./names";
 
 const NS = "http://www.w3.org/2000/svg";

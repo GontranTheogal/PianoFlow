@@ -5,13 +5,14 @@
  *  - La semaine : tendances du jeu en rythme (avance, retard, manquées) cumulées par semaine, pour le bilan.
  *  Tout est en nombres (jours, compteurs) : fusionnable entre appareils par « le meilleur des deux ». */
 
+import { readJson, writeJson } from "./storage";
 export interface ReviewItem { label: string; action: string; /** boîte 0-3 */ box: number; /** jour (n° depuis 1970) où il revient */ due: number; /** fois ratées */ miss: number; /** jour de sortie (réussi 4 fois) : 0 = en cours */ out?: number }
 const KEY = "pianoflow-review", WEEK_KEY = "pianoflow-week";
 const GAPS = [1, 3, 7, 14];
 export const dayNum = (d = new Date()) => Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
 
-function load(): Record<string, ReviewItem> { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } }
-function save(all: Record<string, ReviewItem>) { try { localStorage.setItem(KEY, JSON.stringify(all)); } catch { /* ignore */ } }
+function load(): Record<string, ReviewItem> { return readJson<Record<string, ReviewItem>>(KEY, {}); }
+function save(all: Record<string, ReviewItem>) { writeJson(KEY, all); }
 
 /** Raté : (re)met l'élément en boîte 0, à revoir demain. */
 export function reviewFail(key: string, label: string, action: string, today = dayNum()) {
@@ -37,11 +38,10 @@ export const measureKey = (song: string, m: number) => `m|${song}|${m}`;
 // ── semaine ──
 export interface WeekRec { early: number; late: number; miss: number; good: number; wrong: number; runs: number }
 const weekOf = (d = new Date()) => { const day = dayNum(d), dow = (new Date(d).getDay() + 6) % 7; return day - dow; };   // lundi
-function loadWeeks(): Record<string, WeekRec> { try { return JSON.parse(localStorage.getItem(WEEK_KEY) || "{}"); } catch { return {}; } }
+function loadWeeks(): Record<string, WeekRec> { return readJson<Record<string, WeekRec>>(WEEK_KEY, {}); }
 export function recordRhythmRun(s: { early: number; late: number; miss: number; perfect: number; good: number; wrong: number }) {
   const all = loadWeeks(), k = String(weekOf()), w = all[k] ?? { early: 0, late: 0, miss: 0, good: 0, wrong: 0, runs: 0 };
   all[k] = { early: w.early + s.early, late: w.late + s.late, miss: w.miss + s.miss, good: w.good + s.perfect + s.good, wrong: w.wrong + s.wrong, runs: w.runs + 1 };
-  try { localStorage.setItem(WEEK_KEY, JSON.stringify(all)); } catch { /* ignore */ }
+  writeJson(WEEK_KEY, all);
 }
 export function weekRhythm(offset = 0): WeekRec | null { return loadWeeks()[String(weekOf() - 7 * offset)] ?? null; }
-export const mondayNum = weekOf;

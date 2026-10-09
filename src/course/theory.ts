@@ -6,7 +6,6 @@ export { midiOf, nameOf, FR, MAJOR_KEYS, MINOR_KEYS, type Pitch, type KeyDef };
 const SEMI = [0, 2, 4, 5, 7, 9, 11];
 export const accSym = (a: number) => (a > 0 ? "♯".repeat(a) : a < 0 ? "♭".repeat(-a) : "");
 export const pitchLabel = (p: Pitch) => FR[p.li] + accSym(p.alter);                        // « Sol♯ »
-export const pitchLabelOct = (p: Pitch) => pitchLabel(p) + (p.oct);                        // « Sol♯4 »
 
 /** Pitch d'un degré (0 = tonique) d'une gamme, au-dessus de la tonique située en octave `oct`. `semis` = écarts en demi-tons de chaque degré. */
 export function degreePitch(root: { li: number; alter: number }, oct: number, degree: number, semis: number[]): Pitch {
@@ -44,7 +43,6 @@ export const INVERSION_NAME = ["position fondamentale", "1er renversement", "2e 
 
 // ── tonalités ──
 export const ALL_KEYS: KeyDef[] = [...MAJOR_KEYS, ...MINOR_KEYS];
-export const keyById = (id: string, mode: "major" | "minor") => (mode === "major" ? MAJOR_KEYS : MINOR_KEYS).find((k) => k.id === id)!;
 export const keyLabel = (k: KeyDef) => `${nameOf(k)} ${k.mode === "major" ? "majeur" : "mineur"}`;
 export const keyTonic = (k: KeyDef) => ({ li: k.li, alter: k.alter });
 const MAJ_SCALE = [0, 2, 4, 5, 7, 9, 11], MIN_NAT = [0, 2, 3, 5, 7, 8, 10], MIN_HARM = [0, 2, 3, 5, 7, 8, 11];
@@ -61,9 +59,6 @@ export function degreeChord(k: KeyDef, d: number, seventh = false, oct = 4): { r
   else q = third === 4 && fifth === 7 ? "maj" : third === 3 && fifth === 7 ? "min" : third === 3 && fifth === 6 ? "dim" : "aug";
   return { root, q, pitches: chordPitches({ li: root.li, alter: root.alter }, oct, q) };
 }
-/** Dominante : toujours majeure / de septième (V7), même en mineur. */
-export const dominant = (k: KeyDef, seventh = false) => degreeChord(k, 5, seventh);
-
 /** Voicing main droite d'une suite d'accords : on choisit le renversement qui bouge le moins (accords « sans bouger »). */
 export function voiceLead(chords: Pitch[][], lo = 60, hi = 76): Pitch[][] {
   const out: Pitch[][] = []; let prev: Pitch[] | null = null;

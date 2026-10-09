@@ -11,6 +11,8 @@ import { fingerHand, triadFingering } from "./fingerCore";
 import { DEFAULT_WEIGHTS } from "./fingerCore";
 import { FINGERING_MODEL, FINGERING_WEIGHTS, FINGERING_FEATURES } from "./fingeringModel";
 import { loadHand } from "./hand";
+import { esc } from "./html";
+import { readJson, writeJson } from "./storage";
 
 /** Gammes & arpèges : comprendre (armure, recette en tons/demi-tons, doigtés, partition), jouer sur le clavier,
  *  reconstruire la gamme de mémoire avec explications, puis s'entraîner dans le moteur principal
@@ -22,14 +24,13 @@ interface St { kind: Kind; form: "natural" | "harmonic" | "melodic"; arp: "major
 const KEY = "pianoflow-tech";
 function load(): St {
   const d: St = { kind: "major", form: "natural", arp: "major", key: 0, hand: "R", show: "deg", oct: 1, dir: "up", bpm: 72, ckey: 0, deg: 1, seventh: false, inv: 0, voicing: "root" };
-  try { return { ...d, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch { return d; }
+  return { ...d, ...readJson(KEY, {}) };
 }
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 let host: TechHost, root: HTMLElement, body: HTMLElement, kbdBox: HTMLElement, kbd: MiniKeyboard;
 let st = load(), active = false, token = 0, sv: StaffView | null = null, playTok = 0;
 let build: { idx: number; last: number; t0: number; done: boolean } | null = null;
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch { /* ignore */ } };
+const save = () => { writeJson(KEY, st); };
 
 const keysFor = (s: St): T.KeyDef[] => s.kind === "major" ? T.MAJOR_KEYS : s.kind === "minor" ? T.MINOR_KEYS : (s.arp === "major" ? T.MAJOR_KEYS : T.MINOR_KEYS).filter((k) => k.arp);
 const curKey = () => { const ks = keysFor(st); st.key = Math.max(0, Math.min(ks.length - 1, st.key)); return ks[st.key]; };
@@ -285,7 +286,6 @@ function openPractice() {
 
 export function techMidi(pitch: number, _vel: number, on: boolean) { if (active && on) onPress(pitch, true); }
 export const techActive = () => active;
-export const _debug = () => ({ st, build: build ? { ...build } : null, tags: sv ? sv.n : 0 });
 export function openTech() { active = true; render(); }
 export function closeTech() { active = false; token++; playTok++; build = null; }
 

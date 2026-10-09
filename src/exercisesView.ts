@@ -7,6 +7,8 @@ import { improvDrill, IMPROV_LEVELS } from "./course/accomp";
 import { UNITS, LESSONS } from "./course/curriculum";
 import { loadProgress, isDone } from "./course/engine";
 import * as Skills from "./skills";
+import { esc } from "./html";
+import { readJson, writeJson } from "./storage";
 
 export interface ExHost {
   startDrill(d: Drill): void;
@@ -17,8 +19,8 @@ export interface ExHost {
 const LV_KEY = "pianoflow-ex-levels";
 let host: ExHost, root: HTMLElement, allOpen = false, openRow = "";
 let levels: Record<string, number> = load();
-function load(): Record<string, number> { try { return JSON.parse(localStorage.getItem(LV_KEY) || "{}"); } catch { return {}; } }
-const save = () => { try { localStorage.setItem(LV_KEY, JSON.stringify(levels)); } catch { /* ignore */ } };
+function load(): Record<string, number> { return readJson<Record<string, number>>(LV_KEY, {}); }
+const save = () => { writeJson(LV_KEY, levels); };
 /** Le niveau conseillé : on passe au suivant quand le précédent est réussi à 85 % ; les rythmes vus dans l'unité « Le rythme,
  *  suite » (doubles croches, triolets, 6/8) attendent la leçon qui les explique. */
 const RHYTHM_NEEDS: Record<number, string> = { 7: "ur2-l1", 8: "ur2-l3", 9: "ur2-l4" };
@@ -31,7 +33,6 @@ export function suggestedLevel(k: string, p = loadProgress()): number {
 }
 /** Le niveau choisi à la main, sinon le niveau conseillé. */
 const lv = (k: string) => levels[k] ?? suggestedLevel(k);
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
 interface Card { key: string; icon: string; color: string; title: string; text: string; levels?: string[]; action: string; }
 const CARDS: Card[] = [

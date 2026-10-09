@@ -7,6 +7,7 @@
 import { UNITS } from "./course/curriculum";
 import { loadProgress, isDone } from "./course/engine";
 import { dayNum } from "./review";
+import { readJson, writeJson } from "./storage";
 
 export const SKILLS_KEY = "pianoflow-skills";
 export interface SkillRec { /** maîtrise 0-100 */ m: number; /** nombre de résultats */ n: number; /** dernière mise à jour (ms) */ t: number;
@@ -40,8 +41,8 @@ export const skillByKey = (k: string) => SKILLS.find((s) => s.key === k);
 /** Les compétences enregistrées ; celles d'avant ce modèle sont reprises des records d'exercices (meilleur score, tous niveaux). */
 function load(): Record<string, SkillRec> {
   let all: Record<string, SkillRec> = {}, drills: Record<string, { best: number; runs: number; last?: number }> = {};
-  try { all = JSON.parse(localStorage.getItem(SKILLS_KEY) || "{}"); } catch { /* ignore */ }
-  try { drills = JSON.parse(localStorage.getItem("pianoflow-drills") || "{}"); } catch { /* ignore */ }
+  all = readJson(SKILLS_KEY, all);
+  drills = readJson("pianoflow-drills", drills);
   for (const k of Object.keys(drills)) {
     const key = k.replace(/-\d+$/, ""); if (all[key] || !skillByKey(key)) continue;
     const same = Object.entries(drills).filter(([x]) => x.replace(/-\d+$/, "") === key).map(([, x]) => x);
@@ -62,7 +63,7 @@ export function record(key: string, score: number, now = Date.now()) {
   const a = r ? Math.max(0.25, 1 / (r.n + 1)) : 1;
   const m = Math.round(before + a * (s - before));
   all[key] = { m, n: (r?.n ?? 0) + 1, t: now, d: day, m0: r && r.d === day ? r.m0 : r ? Math.round(before) : -1 };
-  try { localStorage.setItem(SKILLS_KEY, JSON.stringify(all)); } catch { /* ignore */ }
+  writeJson(SKILLS_KEY, all);
 }
 
 /** Maîtrise d'aujourd'hui, oubli compris : à mi-chemin d'une demi-vie sans pratique, on a perdu la moitié de ce qui peut s'oublier

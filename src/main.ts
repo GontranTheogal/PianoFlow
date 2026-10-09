@@ -1,45 +1,42 @@
 import { initMidi } from "./midi";
-import { loadScore, annotateHands, flatten, type Step, type Note, type Meter } from "./score";
+import { loadScore, annotateHands, flatten, preloadScoreEngine, type Step, type Note, type Meter } from "./score";
 import { RhythmJudge, type TimedNote, type RhythmSummary } from "./rhythm";
 import * as Coach from "./coach";
-import { repXml, repFileName, repById, repOfLevel, REPERTOIRE, SONGS, type RepPiece } from "./repertoire";
-const repByFile = (name: string) => REPERTOIRE.find((p) => repFileName(p) === name);
+import { repXml, repById } from "./repertoire";
 import { parseExplicitFingering, assignFingering, fingerKey, type ExplicitFingering } from "./fingering";
 import * as FE from "./fingerEdits";
 import { markKeyFingerings } from "./fingerMarks";
-import { loadHand, saveHand } from "./hand";
+import { loadHand } from "./hand";
 import { Follower, type Hand } from "./follower";
 import { Player } from "./player";
 import { Piano } from "./piano";
 import { FallingNotes } from "./falling";
 import { Synth } from "./audio";
 import { noteName } from "./names";
-import { getStats, getAll, recordPlay } from "./stats";
-import { listLibrary, addToLibrary, toggleFavorite, removeFromLibrary, renameSong } from "./library";
-import { isDesktopApp, isIpadApp } from "./sync";
-import { startPcSync, syncNow, setHandlers as setPcHandlers, getSavedUrl, saveUrl, servedByPc, isCloud, getSyncCode, saveSyncCode, generateSyncCode } from "./pcsync";
-import { rateDifficulty, pieceFromSteps, LEVEL_LABEL } from "./difficulty";
-import { xmlDifficulty } from "./difficultyXml";
-import { exportBackup, importBackup } from "./backup";
+import { recordPlay } from "./stats";
+import { listLibrary, addToLibrary } from "./library";
+import { rateDifficulty, pieceFromSteps } from "./difficulty";
+import { LEGACY_KEYS } from "./backup";
 import * as Review from "./review";
 import { pedalMarks, judgePedalMarks, type PedalMark } from "./pedalJudge";
 import { initSolfege, openSolfege, closeSolfege, solfegeMidi, solfegeActive } from "./solfege";
 import { initTech, openTech, closeTech, techMidi, techActive } from "./tech";
-import { initCourse, openCourse, closeCourse, courseMidi, coursePedal, courseActive, refreshCourse, startDrill, startLessonById, clearLessonExit, recallDrill, _state as courseState, type Drill } from "./course/ui";
+import { initCourse, openCourse, closeCourse, courseMidi, coursePedal, courseActive, startDrill, startLessonById, clearLessonExit, recallDrill, _state as courseState, type Drill } from "./course/ui";
 import { initExercises, openExercises, launch as launchExercise } from "./exercisesView";
-import { initToday, openToday, resetTodayView, repLevel } from "./today";
+import { initToday, openToday, resetTodayView } from "./today";
 import * as Daily from "./daily";
 import * as Skills from "./skills";
 import { LESSONS } from "./course/curriculum";
 import * as X from "./exercises";
 import * as T from "./techCore";
 import { setKeyboardRange, rangeForNotes, WHITE_COUNT } from "./keyboardLayout";
+import { esc } from "./html";
+import { removeKey } from "./storage";
+import { $, store, toast, cleanName } from "./app/dom";
+import { initLibraryView, renderLibraryHome, openByName, openRepertoire } from "./app/libraryView";
+import { initSettings } from "./app/settings";
+import type { AppMode, View, FingerMode, Tab, ViewName, OpenOpts } from "./app/types";
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const store = {
-  get: (k: string, d: string) => { try { return localStorage.getItem("pianoflow-" + k) ?? d; } catch { return d; } },
-  set: (k: string, v: string) => { try { localStorage.setItem("pianoflow-" + k, v); } catch { /* ignore */ } },
-};
 const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 const piano = new Piano($("piano"));
@@ -48,9 +45,6 @@ const synth = new Synth();
 falling.setColors(cssVar("--hand-r"), cssVar("--hand-l"), cssVar("--ok"));
 
 // ───────────── état ─────────────
-type AppMode = "step" | "rhythm";  // Pas à pas (le morceau attend tes touches) / En rythme (le morceau avance, noté sur le temps)
-type View = "flow" | "fall";       // Partition qui défile (Flowkey) / Notes qui tombent (Synthesia)
-type FingerMode = "auto" | "all" | "off";
 let steps: Step[] = [], allNotes: Note[] = [], sortedNotes: Note[] = [];
 let measureStarts: { id: string; t: number }[] = [];
 let songName = "", songDuration = 1;
@@ -71,19 +65,22 @@ const passListeners: ((r: PassResult) => void)[] = [];
 let soundOnPress = store.get("keySound", "1") === "1";   // activé par défaut : en Jouer à deux mains, c'est le seul son que tu entends
 let hits = 0, misses = 0, learnFinished = false;
 let loopRestart: number | undefined;   // relance automatique d'une boucle en rythme (voir showLoopNote)
-let toastTimer: number | undefined;
 const noteEls = new Map<string, Element>();
 const scoreEl = $("score");
 
 const isShown = (n: { hand: "R" | "L" }) => follower.hand === "both" || n.hand === follower.hand;
 const loopStartIndex = () => (follower.loop ? follower.findIndexAtOrAfter(follower.loop.start) : 0);
-const cleanName = (n: string) => n.replace(/\.(xml|musicxml|mxl)$/i, "");
-const escapeHtml = (t: string) => t.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-
-function toast(msg: string, ms = 1800) {
-  const el = $("toast"); el.textContent = msg; el.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = window.setTimeout(() => el.classList.remove("show"), ms);
+/** La partition (SVG de Verovio, tiré d'un fichier importé) : insérée sans script, sans gestionnaire on…, sans lien externe. */
+function setScoreSvg(el: HTMLElement, svg: string) {
+  const doc = new DOMParser().parseFromString(svg, "image/svg+xml"), root = doc.documentElement;
+  if (root.nodeName !== "svg") { el.replaceChildren(); return; }
+  root.querySelectorAll("script, foreignObject, iframe, object, embed").forEach((n) => n.remove());
+  for (const n of [root, ...Array.from(root.querySelectorAll("*"))]) for (const at of Array.from(n.attributes)) {
+    if (/^on/i.test(at.name) || (/href$/i.test(at.name) && !at.value.startsWith("#"))) n.removeAttribute(at.name);
+  }
+  el.replaceChildren(document.importNode(root, true));
 }
+
 
 // ───────────── lecture ─────────────
 const follower = new Follower({
@@ -111,7 +108,6 @@ player.onFinished = () => {                 // fin de la démo ▶ : on reprend 
   updatePlayBtn();
 };
 
-const starsFor = (acc: number) => (acc >= 95 ? "⭐⭐⭐" : acc >= 80 ? "⭐⭐" : "⭐");
 
 /** Fin d'un passage en Pas à pas (fin du morceau ou de la boucle). */
 function finishLearn(loopPass = false) {
@@ -136,7 +132,7 @@ function reportPass(r: PassResult) {
     for (const m of r.summary.weak) Review.reviewFail(Review.measureKey(songName, m), `mesure ${m + 1} · ${title}`, `loop:${songName}|${m}`);
     if (r.score >= 90 && r.loop) for (let m = r.loop.a; m < r.loop.b; m++) Review.reviewPass(Review.measureKey(songName, m));
   }
-  if (dailyTag) { Daily.markDone(dailyTag); void syncNow(); }
+  if (dailyTag) Daily.markDone(dailyTag);
   // compétences : déchiffrage et échauffement d'après leur étape, le jeu en rythme d'après les morceaux (hors leçons)
   if (!pieceHook && (dailyTag === "sight" || dailyTag === "warmup")) Skills.record(dailyTag, r.score);
   else if (!pieceHook && songName && r.mode === "rhythm" && !loopM && r.speed >= 70) Skills.record("play", r.score);
@@ -239,7 +235,6 @@ $("fingerBar").addEventListener("click", (e) => {
     const f = Number(b.dataset.ff), id = fSel.id;
     FE.setEdit(songName, keyOf(fSel), f || null); recomputeFingering();
     fSel = allNotes.find((n) => n.id === id) ?? null; renderFingerBar(); markFingerSel();
-    setTimeout(() => void syncNow(), 1500);
     return;
   }
   if (b.dataset.fnext !== undefined) { fSel = null; follower.seek(Math.min(steps.length - 1, follower.index + 1)); return; }
@@ -858,7 +853,6 @@ function fitKeyboard() {
 // ───────────── ouverture d'un morceau ─────────────
 let returnTo: ViewName | null = null;
 let dailyTag: string | null = null;
-interface OpenOpts { /** tâche de la séance du jour que ce morceau accomplit */ tag?: string; /** démarrer le coach */ coach?: boolean; library?: boolean; back?: ViewName; hands?: "R" | "L" | "both"; mode?: AppMode; speed?: number; hook?: { pass: number; mode: AppMode; minSpeed: number; hands: Hand; cb: (acc: number) => void }; }
 async function openFile(file: File, opts: OpenOpts = {}) {
   returnTo = opts.back ?? null; pieceHook = opts.hook ?? null; dailyTag = opts.tag ?? null;
   coach = null; renderCoach(); hideResult(); fEdit = false; fSel = null; fnumEls.clear(); renderFingerBar();
@@ -867,7 +861,7 @@ async function openFile(file: File, opts: OpenOpts = {}) {
   songName = file.name; $("songTitle").textContent = cleanName(file.name);
   try {
     const res = await loadScore(file);
-    scoreEl.innerHTML = res.svg;
+    setScoreSvg(scoreEl, res.svg);
     steps = res.steps; measureStarts = res.measureStarts; meter = res.meter;
     annotateHands(steps);
     pieceMarks = res.xmlText ? pedalMarks(res.xmlText) : [];
@@ -907,8 +901,6 @@ function recomputeFingering() {
 }
 
 // ───────────── navigation : quatre onglets (+ les vues qu'ils ouvrent) et le jeu ─────────────
-type Tab = "today" | "course" | "library" | "exercises";
-type ViewName = Tab | "tech" | "solfege" | "drill";
 const TABS: Tab[] = ["today", "course", "library", "exercises"];
 const VIEW_ID: Record<ViewName, string> = { today: "todayView", course: "courseView", library: "libraryHomeView", exercises: "exercisesView", tech: "techView", solfege: "solfegeView", drill: "courseView" };
 const TAB_OF: Record<ViewName, Tab> = { today: "today", course: "course", library: "library", exercises: "exercises", tech: "exercises", solfege: "exercises", drill: "exercises" };
@@ -979,7 +971,6 @@ initSolfege($("solfegeView"), { play: (p, ms) => { void synth.playNote(p, ms ?? 
 initCourse($("courseView"), {
   play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, click: (accent) => synth.click(accent), soundOnPress: () => soundOnPress,
   openPiece: (xml, title, o) => { void openFile(new File([xml], title + ".musicxml", { type: "application/xml" }), { library: false, back: "course", hands: o.hands, speed: o.mode === "rhythm" ? o.minSpeed : 100, hook: { pass: o.pass, mode: o.mode, minSpeed: o.minSpeed, hands: o.hands, cb: o.onResult } }); },
-  onProgress: () => { void syncNow(); },
   onDrillExit: () => showTab(drillReturn),
 });
 initExercises($("exercisesView"), {
@@ -1006,129 +997,6 @@ initToday($("todayView"), {
   },
 });
 
-/** Les groupes de l'onglet Morceaux : un seul affiché à la fois (celui de ton niveau à l'ouverture), pour ne pas noyer le choix. */
-type LibGroup = "songs" | "1" | "2" | "3" | "mine";
-const LIB_GROUPS: { id: LibGroup; label: string; intro: string; after?: string }[] = [
-  { id: "songs", label: "Chansons", intro: "La mélodie à la main droite, les accords à la main gauche : les lettres au-dessus de la portée disent lequel jouer." },
-  { id: "1", label: "Niveau 1", intro: "Premiers vrais morceaux : deux mains, peu de déplacements.", after: "u6-l9" },
-  { id: "2", label: "Niveau 2", intro: "Les grands classiques : arpèges, pédale, mains qui se relaient.", after: "ua-l5" },
-  { id: "3", label: "Niveau 3", intro: "Pièces de concert : septièmes, tonalités variées, passages rapides.", after: "k-7-4" },
-  { id: "mine", label: "Mes partitions", intro: "" },
-];
-const CHORD_LETTERS = `<details class="rep-more"><summary>Lire les lettres d'accords (C, G, Am…)</summary><p>C = Do, D = Ré, E = Mi, F = Fa, G = Sol, A = La, B = Si. Une lettre seule : accord majeur ; suivie de « m » : mineur (Am = La mineur). La main gauche joue cet accord avec un motif simple (basse, basse-quinte, arpège), jusqu'à la lettre suivante. Tout est expliqué dans l'unité « Accompagner une chanson » du parcours.</p></details>`;
-let libGroup: LibGroup | null = null;
-/** Pastille de difficulté (1 à 5) : le libellé, et ce qui rend le morceau difficile en infobulle. */
-const diffChip = (level: number, why: string[] = []) => `<span class="diff d${level}" title="${escapeHtml(why.length ? "Ce qui est difficile : " + why.join(", ") : "")}">${"●".repeat(level)}${"○".repeat(5 - level)} ${LEVEL_LABEL[level as 1]}</span>`;
-/** Ouvre un morceau d'après son nom de fichier : répertoire intégré, sinon bibliothèque. */
-async function openByName(name: string, o: OpenOpts): Promise<boolean> {
-  const p = repByFile(name);
-  if (p) { await openFile(new File([repXml(p)], repFileName(p), { type: "application/xml" }), { library: false, ...o }); return true; }
-  const e = (await listLibrary()).find((x) => x.name === name);
-  if (!e) { toast("Ce morceau n'est plus dans la bibliothèque"); return false; }
-  await openFile(new File([e.fileData], e.name), o); return true;
-}
-function openRepertoire(id: string, withCoach: boolean, back: ViewName = "library") {
-  const p = repById(id); if (!p) return;
-  void openFile(new File([repXml(p)], repFileName(p), { type: "application/xml" }), { library: false, coach: withCoach, back, tag: "piece" });
-}
-async function renderLibraryHome() {
-  const list = await listLibrary(), lv = repLevel();
-  const g = libGroup ?? (lv > 0 ? String(lv) as LibGroup : "songs");
-  $("libSeg").innerHTML = LIB_GROUPS.map((x) => `<button data-lib="${x.id}" class="${x.id === g ? "on" : ""}">${x.label}${x.id === "mine" && list.length ? `<small>${list.length}</small>` : ""}</button>`).join("");
-  $("myScores").classList.toggle("hidden", g !== "mine");
-  // ── répertoire intégré ──
-  const rep = $("repGrid");
-  const stats = getAll(), coachAll = Coach.loadAll(), grp = LIB_GROUPS.find((x) => x.id === g)!;
-  const pieces: RepPiece[] = g === "songs" ? SONGS : g === "mine" ? [] : repOfLevel(Number(g));
-  const unitOf = (id?: string) => LESSONS.find((l) => l.id === id)?.unit.title;
-  const level = g === "songs" || g === "mine" ? 0 : Number(g);
-  const where = !level ? "" : level === lv ? " <b>À ton niveau.</b>" : level > lv && unitOf(grp.after) ? ` Conseillé après l'unité « ${escapeHtml(unitOf(grp.after)!)} » : tu peux essayer avant, très lentement.` : "";
-  rep.innerHTML = g === "mine" ? "" : `<p class="rep-intro">${escapeHtml(grp.intro)}${where}</p>${g === "songs" ? CHORD_LETTERS : ""}<div class="rep-row">${pieces.map((p) => {
-    const st = stats[repFileName(p)], pct = coachAll[repFileName(p)]?.pct ?? 0, best = st?.bestRhythm ?? 0;
-    const status = best >= 90 ? `<span class="rep-ok">✓ maîtrisé (${best} %)</span>` : pct ? `<span class="rep-prog">coach ${pct} %</span>` : "";
-    return `<div class="rep-card"><div class="rep-top"><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.composer)}</small></div>
-      <span class="diff-slot" data-diff="${p.id}"></span><p class="rep-skills">${escapeHtml(p.skills)}</p><div class="rep-bar"><i style="width:${Math.max(pct, best >= 90 ? 100 : 0)}%"></i></div>${status}
-      <div class="rep-btns"><button class="btn clay primary" data-rep="${p.id}" data-coach="1" title="${escapeHtml(p.tip)}">🎯 Apprendre</button><button class="btn clay" data-rep="${p.id}">▶ Jouer</button></div></div>`;
-  }).join("")}</div>`;
-  // difficultés calculées après l'affichage, une carte à la fois (mise en cache)
-  const slots = Array.from(rep.querySelectorAll<HTMLElement>("[data-diff]"));
-  const fill = () => { const el = slots.shift(); if (!el) return; const p = repById(el.dataset.diff!); if (p) { const d = xmlDifficulty(repXml(p), p.id); el.innerHTML = diffChip(d.level, d.reasons); } setTimeout(fill, 0); };
-  setTimeout(fill, 30);
-  // ── partitions de l'utilisateur (synchronisées) ──
-  const host = $("libraryGrid");
-  host.innerHTML = "";
-  $("libraryHomeEmpty").classList.toggle("hidden", list.length > 0);
-  for (const e of list) {
-    const st = getStats(e.name), pct = Math.max(st?.bestRhythm ?? 0, st?.bestAccuracy ?? 0), cpct = coachAll[e.name]?.pct ?? 0;
-    const card = document.createElement("div");
-    card.className = "song-card";
-    let hash = 0; for (let i = 0; i < e.name.length; i++) hash = (hash << 5) - hash + e.name.charCodeAt(i);
-    const hue = Math.abs(hash) % 360;
-    const title = escapeHtml(cleanName(e.name));
-    card.innerHTML = `
-      <div class="song-cover" style="background:linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 60) % 360} 70% 45%))">
-        <button class="fav-btn">${e.favorite ? "★" : "☆"}</button>
-        <div class="ring"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"></circle><circle cx="20" cy="20" r="16" style="stroke-dasharray:${Math.round(pct)} 100" pathLength="100"></circle></svg><span>${pct}%</span></div>
-      </div>
-      <div class="song-info">
-        <div class="song-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-          <span class="title-text" style="overflow:hidden;text-overflow:ellipsis;cursor:pointer;min-width:0;">${title}</span>
-          <span style="display:flex;gap:6px;flex:none;margin-left:8px"><button class="mini-btn edit-btn" title="Renommer">✏️</button><button class="mini-btn danger song-del" title="Supprimer">🗑</button></span>
-        </div>
-        <div class="song-meta">${diffChip(Math.min(5, Math.max(1, e.difficulty || 1)), e.why)}</div>
-        <div class="rep-bar"><i style="width:${Math.max(cpct, (st?.bestRhythm ?? 0) >= 90 ? 100 : 0)}%"></i></div>
-        ${(st?.bestRhythm ?? 0) >= 90 ? `<span class="rep-ok">✓ maîtrisé (${st!.bestRhythm} %)</span>` : cpct ? `<span class="rep-prog">coach ${cpct} %</span>` : `<span class="rep-prog muted">pas encore commencé</span>`}
-        <div class="rep-btns"><button class="btn clay primary coach-btn" title="Apprendre avec le coach : section par section, mains séparées puis ensemble, puis en rythme">🎯 Apprendre</button><button class="btn clay play-btn">▶ Jouer</button></div>
-      </div>`;
-    const open = (coach = false) => openFile(new File([e.fileData || (e as any).xml], e.name), { coach, tag: "piece" });
-    card.querySelector(".song-cover")!.addEventListener("click", (ev) => { if ((ev.target as HTMLElement).closest(".fav-btn")) return; open(); });
-    card.querySelector(".title-text")!.addEventListener("click", () => open());
-    card.querySelector(".coach-btn")!.addEventListener("click", (ev) => { ev.stopPropagation(); open(true); });
-    card.querySelector(".play-btn")!.addEventListener("click", (ev) => { ev.stopPropagation(); open(false); });
-    card.querySelector(".fav-btn")!.addEventListener("click", async (ev) => { ev.stopPropagation(); await toggleFavorite(e.name); renderLibraryHome(); });
-    card.querySelector(".song-del")!.addEventListener("click", async (ev) => {
-      ev.stopPropagation();
-      if (confirm("Supprimer ce morceau (sur tous tes appareils) ?")) { await removeFromLibrary(e.name); renderLibraryHome(); }
-    });
-    card.querySelector(".edit-btn")!.addEventListener("click", async (ev) => {
-      ev.stopPropagation();
-      const base = cleanName(e.name), ext = e.name.substring(base.length);
-      const nn = prompt("Renommer le morceau :", base);
-      if (nn && nn.trim() && nn !== base) { await renameSong(e.name, nn.trim() + ext); renderLibraryHome(); }
-    });
-    host.appendChild(card);
-  }
-}
-$("libSeg").addEventListener("click", (ev) => {
-  const b = (ev.target as HTMLElement).closest("[data-lib]") as HTMLElement | null;
-  if (b) { libGroup = b.dataset.lib as LibGroup; void renderLibraryHome(); }
-});
-$("repGrid").addEventListener("click", (ev) => {
-  const b = (ev.target as HTMLElement).closest("[data-rep]") as HTMLElement | null;
-  if (b) openRepertoire(b.dataset.rep!, b.dataset.coach === "1");
-});
-
-// ───────────── réglages ─────────────
-$("toggleSettings").addEventListener("click", () => $("settingsPanel").classList.toggle("closed"));
-$("closeSettings").addEventListener("click", () => $("settingsPanel").classList.add("closed"));
-// thème : clair, sombre, ou celui de l'appareil (« Auto ») ; appliqué dès le chargement par le script en tête de page
-{
-  const KEY = "pianoflow-theme", media = matchMedia("(prefers-color-scheme: dark)");
-  const apply = () => {
-    let t = "auto"; try { t = localStorage.getItem(KEY) || "auto"; } catch { /* ignore */ }
-    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
-    const dark = t === "dark" || (t === "auto" && media.matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#1c1f26" : "#ffffff");
-    document.querySelectorAll<HTMLElement>("#themeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.theme === t));
-  };
-  $("themeSeg").addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest("[data-theme]") as HTMLElement | null; if (!b) return;
-    try { localStorage.setItem(KEY, b.dataset.theme!); } catch { /* ignore */ }
-    apply();
-  });
-  media.addEventListener?.("change", apply);
-  apply();
-}
 const namesBox = $("names") as HTMLInputElement;
 namesBox.checked = store.get("names", "1") === "1";
 const applyNames = () => { piano.setShowNames(namesBox.checked); falling.setShowNames(namesBox.checked); };
@@ -1138,18 +1006,6 @@ const fingerSel = $("fingerMode") as HTMLSelectElement;
 fingerSel.value = fingerMode;
 function setFingerMode(m: FingerMode) {
   fingerMode = m; fingerSel.value = m; store.set("fingers", m); updateFallingNotes(); pianoSig = ""; drawFingerNums(); refreshFingerToggle();
-// ── sauvegarde ──
-$("backupExport").addEventListener("click", async () => {
-  const blob = await exportBackup(), a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = `pianoflow-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-});
-$("backupImport").addEventListener("click", () => ($("backupFile") as HTMLInputElement).click());
-$("backupFile").addEventListener("change", async (e) => {
-  const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
-  try { const r = await importBackup(await f.text()); toast(`Sauvegarde importée : ${r.keys} éléments, ${r.pieces} partition(s)`, 3500); setTimeout(() => location.reload(), 1200); }
-  catch (err) { alert("Import impossible : " + (err as Error).message); }
-});
 }
 function refreshFingerToggle() {
   const b = $("fingerToggleBtn"); b.classList.toggle("off", fingerMode === "off");
@@ -1158,26 +1014,9 @@ function refreshFingerToggle() {
 fingerSel.addEventListener("change", () => setFingerMode(fingerSel.value as FingerMode));
 $("fingerToggleBtn").addEventListener("click", () => { if (fingerMode !== "off") store.set("fingersBack", fingerMode); setFingerMode(fingerMode === "off" ? (store.get("fingersBack", "auto") as FingerMode) : "off"); toast(fingerMode === "off" ? "Doigtés masqués : à toi de les trouver" : "Doigtés affichés"); });
 refreshFingerToggle();
-($("volume") as HTMLInputElement).addEventListener("input", (e) => (synth.volume = Number((e.target as HTMLInputElement).value) / 100));
 const soundBox = $("soundOnPress") as HTMLInputElement;
 soundBox.checked = soundOnPress;
 soundBox.addEventListener("change", () => { soundOnPress = soundBox.checked; store.set("keySound", soundOnPress ? "1" : "0"); });
-const metroBox = $("metro") as HTMLInputElement, bpmBox = $("bpm") as HTMLInputElement;
-const applyMetro = () => { if (metroBox.checked) synth.startMetronome(Math.max(40, Math.min(220, Number(bpmBox.value) || 80))); else synth.stopMetronome(); };
-metroBox.addEventListener("change", applyMetro); bpmBox.addEventListener("change", applyMetro);
-
-$("file").addEventListener("change", (e) => {
-  const input = e.target as HTMLInputElement; const f = input.files?.[0]; input.value = "";
-  if (!f) return;
-  if (/\.(pdf|png|jpe?g)$/i.test(f.name)) { pdfHelp(); return; }
-  if (/\.(mid|midi)$/i.test(f.name)) { alert("Un fichier MIDI ne contient pas la partition (portées, mesures, doigtés).\nOuvre-le dans MuseScore (gratuit), puis Fichier → Exporter → MusicXML, et importe ce fichier ici."); return; }
-  void openFile(f);
-});
-/** Une partition en PDF ou en photo : comment la transformer en MusicXML. */
-function pdfHelp() {
-  alert("PianoFlow lit les partitions MusicXML (.musicxml, .mxl), pas les PDF ni les photos.\n\nPour convertir un PDF :\n1. MuseScore 4 (gratuit) : Fichier → Importer un PDF (service gratuit musescore.com), puis Fichier → Exporter → MusicXML.\n2. Ou Audiveris (gratuit, hors ligne) : ouvre le PDF, puis Exporter en MusicXML.\n3. Vérifie la partition obtenue (la reconnaissance fait parfois des erreurs), puis importe le fichier .mxl ici.\n\nAstuce : beaucoup de partitions gratuites existent déjà en MusicXML sur musescore.com et sur le Mutopia Project.");
-}
-$("homeOpenBtn2").addEventListener("click", () => $("file").click());
 
 // ───────────── clavier MIDI ─────────────
 function onKey(pitch: number, velocity: number, on: boolean) {
@@ -1203,32 +1042,16 @@ let sustain = false;
 let pedalEvents: { t: number; down: boolean }[] = [], pieceMarks: PedalMark[] = [];
 initMidi(onKey, (s) => {
   // le nom du clavier plutôt qu'un « connecté » générique : on voit tout de suite si c'est bien le sien
-  const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "unsure" ? "Joue une note" : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
-  el.innerHTML = `<span>🎹</span> <b>${escapeHtml(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok"); el.classList.toggle("unsure", s.state === "unsure");
+  const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
+  el.innerHTML = `<span>🎹</span> <b>${esc(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok");
 },
   (cc, v) => { if (cc !== 64) return; const was = sustain; sustain = v >= 64; coursePedal(sustain); if (run && was !== sustain) pedalEvents.push({ t: player.playhead, down: sustain }); });
 
-// ───────────── ma main ─────────────
-const paintHand = (() => {
-  const span = $("handSpan") as HTMLInputElement, thumb = $("handThumb") as HTMLInputElement;
-  const paint = () => {
-    const h = loadHand();
-    span.value = String(h.span); thumb.value = h.thumbIndex ? String(h.thumbIndex) : "";
-    document.querySelectorAll<HTMLElement>("#handPresets button").forEach((b) => b.classList.toggle("on", Number(b.dataset.span) === h.span && !h.thumbIndex));
-  };
-  const apply = () => {
-    saveHand({ span: Number(span.value), thumbIndex: thumb.value ? Number(thumb.value) : undefined });
-    paint(); recomputeFingering(); setTimeout(() => void syncNow(), 800);       // la main mesurée suit l'utilisateur d'un appareil à l'autre
-  };
-  span.addEventListener("change", apply); thumb.addEventListener("change", apply);
-  $("handPresets").addEventListener("click", (e) => { const b = (e.target as HTMLElement).closest("button"); if (b) { span.value = b.dataset.span!; thumb.value = ""; apply(); } });
-  paint();
-  return paint;
-})();
-
-// ───────────── synchronisation entre appareils (Netlify, ou PC local) ─────────────
-
 // ───────────── démarrage ─────────────
+LEGACY_KEYS.forEach(removeKey);
+initLibraryView({ openFile });
+initSettings({ synth, openFile, recomputeFingering });
+window.addEventListener("load", preloadScoreEngine, { once: true });
 Daily.startTracking();
 syncHeaderHeight();
 player.restart();
@@ -1248,18 +1071,8 @@ function showUpdateBanner() {
   b.querySelector("button")!.addEventListener("click", () => location.reload());
   document.body.appendChild(b);
 }
-// App iPad « coquille » (site chargé en ligne, sans service worker) : au retour sur l'app, on regarde si le site a changé.
-if (isIpadApp() && /^https:$/.test(location.protocol)) {
-  const mine = () => Array.from(document.querySelectorAll<HTMLScriptElement>("script[type=module][src]")).map((x) => x.getAttribute("src")!);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
-    fetch("./index.html", { cache: "no-store" }).then((r) => (r.ok ? r.text() : "")).then((html) => {
-      const cur = mine(); if (html && cur.length && !cur.every((src) => html.includes(src))) showUpdateBanner();
-    }).catch(() => {});
-  });
-}
 // Service worker (hors-ligne) : uniquement en contexte sécurisé (https ou localhost).
-if ("serviceWorker" in navigator && window.isSecureContext && !isDesktopApp() && !isIpadApp()) {
+if ("serviceWorker" in navigator && window.isSecureContext) {
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("./sw.js").then((reg) => {
     // vérifier régulièrement s'il y a une nouvelle version (au retour sur l'appli, et toutes les 30 min)

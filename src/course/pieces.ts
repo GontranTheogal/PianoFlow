@@ -1,5 +1,5 @@
 /** Morceaux et exercices de base (domaine public) et générateurs d'enchaînements d'accords. */
-import { P, M, kbFor, evs, octaveDown, type Tok, type Ev, dur, chordEv, note, buildXml } from "./build";
+import { P, M, kbFor, evs, octaveDown, type Tok, dur, chordEv, buildXml } from "./build";
 import { degreeChord, voiceLead, invert, midiOf, nameOf, keyLabel, chordName, chordPitches, type KeyDef, type Pitch, type Quality } from "./theory";
 import type { Q } from "./types";
 

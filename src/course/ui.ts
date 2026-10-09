@@ -11,6 +11,8 @@ import { markDone } from "../daily";
 import { record as recordSkill } from "../skills";
 import { dueLessons, recallQuestions, recordRecall, origin as recallOrigin } from "../recall";
 import type { Q, Show, Audio, Unit } from "./types";
+import { esc } from "../html";
+import { readJson, writeJson } from "../storage";
 
 export interface CourseHost {
   play(pitch: number, ms?: number): void;
@@ -18,19 +20,16 @@ export interface CourseHost {
   soundOnPress(): boolean;
   /** Ouvre un exercice dans le moteur d'entraînement ; `onResult` reçoit le score (%) d'un passage noté. */
   openPiece(xml: string, title: string, o: { pass: number; hands: "R" | "L" | "both"; mode: "step" | "rhythm"; minSpeed: number; onResult: (acc: number) => void }): void;
-  /** Progression modifiée : à envoyer aux autres appareils. */
-  onProgress(): void;
   /** Un exercice libre (oreille, rythme…) est terminé ou abandonné : on revient à la page des exercices. */
   onDrillExit?(): void;
 }
 /** Exercice libre : même déroulé qu'une leçon, sans déblocage ; les questions sont régénérées à chaque partie. */
 export interface Drill { key: string; title: string; color: string; icon: string; make: () => Q[]; }
 
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const UI_KEY = "pianoflow-course-ui";
 interface UiPrefs { unlockAll: boolean; names: boolean; }
-const loadPrefs = (): UiPrefs => { try { return { unlockAll: false, names: false, ...JSON.parse(localStorage.getItem(UI_KEY) || "{}") }; } catch { return { unlockAll: false, names: false }; } };
-const savePrefs = () => { try { localStorage.setItem(UI_KEY, JSON.stringify(prefs)); } catch { /* ignore */ } };
+const loadPrefs = (): UiPrefs => ({ unlockAll: false, names: false, ...readJson(UI_KEY, {}) });
+const savePrefs = () => { writeJson(UI_KEY, prefs); };
 
 let host: CourseHost, root: HTMLElement, kbd: MiniKeyboard | null = null;
 let prefs = loadPrefs(), prog: Progress = loadProgress(), active = false;
@@ -78,7 +77,7 @@ function renderPath() {
       ${UNITS.map((u) => {
         const ls = LESSONS.filter((l) => l.unit === u);
         const full = ls.every((l) => isDone(prog, l.id));
-        return `<section class="cs-unit" id="unit-${u.id}"><header style="background:${u.color}"><span class="cs-uic">${esc(u.icon)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">⏩ Je connais déjà</button>`}</header>
+        return `<section class="cs-unit" id="unit-${u.id}"><header style="--c:${u.color}"><span class="cs-uic">${esc(u.icon)}</span><div><small>Unité ${UNITS.indexOf(u) + 1}</small><h3>${esc(u.title)}</h3><p>${esc(u.sub)}</p></div>${full ? "" : `<button class="cs-test" data-test="${u.id}" title="Un court test sur toute l'unité : réussi, elle est validée d'un coup">⏩ Je connais déjà</button>`}</header>
           <div class="cs-nodes">${ls.map((l) => {
             const done = isDone(prog, l.id), unlocked = isUnlocked(prog, ids(), l.index, prefs.unlockAll), isCur = l.index === cur;
             const s = prog.done[l.id]?.stars ?? 0, shift = NODE_SHIFT[l.inUnit % NODE_SHIFT.length];
@@ -89,7 +88,7 @@ function renderPath() {
       }).join("")}
       <details class="cs-opts"><summary>Options du parcours</summary>
         <label class="sf-chk"><input type="checkbox" id="csFree" ${prefs.unlockAll ? "checked" : ""}/> Mode libre : tout débloquer, sans suivre l'ordre</label>
-        <button class="cs-reset" data-coursereset title="Efface les leçons réussies (sur tous tes appareils synchronisés). Les jours de pratique et tes morceaux ne bougent pas.">↺ Recommencer le parcours depuis le début</button>
+        <button class="cs-reset" data-coursereset title="Efface les leçons réussies. Les jours de pratique et tes morceaux ne bougent pas.">↺ Recommencer le parcours depuis le début</button>
       </details>
     </div>
     <div class="cs-sheet hidden" id="csSheet"></div>
@@ -141,7 +140,7 @@ function finishTest(r: Run, accuracy: number) {
   if (ok) {
     const last = LESSONS.filter((l) => l.unit === u).pop()!;
     const res = validateLessons(prog, LESSONS.filter((l) => l.index <= last.index).map((l) => l.id), accuracy);
-    prog = res.progress; added = res.added; saveProgress(prog); host.onProgress();
+    prog = res.progress; added = res.added; saveProgress(prog);
   }
   const first = LESSONS.find((l) => l.unit === u && !isDone(prog, l.id));
   root.innerHTML = `<div class="cs-lesson cs-done" style="--c:${u.color}"><div class="cs-sum">
@@ -172,7 +171,6 @@ export function startDrill(d: Drill, backLabel = "Retour aux exercices") {
   run = { lesson, session, q: session.current!, mistakes: 0, resolved: false, hinted: false, seqPos: 0, chord: null, staffEl: null, tokens: 0, rhythm: null, startedAt: Date.now(), summary: false, outcome: false, drill: d };
   renderLesson();
 }
-export const inDrill = () => !!run?.drill && !run.summary;
 /** Ouvre directement une leçon (séance du jour). */
 export function startLessonById(id: string, onExit?: () => void, label = "Retour à la séance du jour") { active = true; prog = loadProgress(); exitTo = onExit ?? null; exitLabel = label; startLesson(id); }
 
@@ -493,7 +491,7 @@ function finishLesson() {
   const accuracy = r.session.accuracy;
   if (r.drill) { finishDrill(r, accuracy); return; }
   const res = completeLesson(prog, r.lesson.id, accuracy);
-  prog = res.progress; saveProgress(prog); markDone("lesson"); markDone("lesson:" + r.lesson.id); host.onProgress();
+  prog = res.progress; saveProgress(prog); markDone("lesson"); markDone("lesson:" + r.lesson.id);
   r.summary = true; r.result = { xp: res.xp, stars: res.stars, accuracy, first: res.first, streak: streak(prog.days) };
   const next = LESSONS[r.lesson.index + 1];
   const nextOpen = next && isUnlocked(prog, ids(), next.index, prefs.unlockAll);
@@ -507,7 +505,7 @@ function finishLesson() {
 }
 
 const DRILL_KEY = "pianoflow-drills";
-export function drillStats(): Record<string, { best: number; runs: number; last: number }> { try { return JSON.parse(localStorage.getItem(DRILL_KEY) || "{}"); } catch { return {}; } }
+export function drillStats(): Record<string, { best: number; runs: number; last: number }> { return readJson<Record<string, { best: number; runs: number; last: number }>>(DRILL_KEY, {}); }
 /** Révision express du jour (séance du jour) : null s'il n'y a rien à revoir. */
 export function recallDrill(): Drill | null {
   const lessons = dueLessons(loadProgress());
@@ -519,7 +517,7 @@ function finishRecall(r: Run, accuracy: number) {
   for (const [q, ok] of r.session.firstTry) { const id = recallOrigin.get(q); if (id) res[id] = (res[id] ?? true) && ok; }
   recordRecall(res); markDone("recall");
   const p = loadProgress(); if (!p.days.includes(dayKey())) { p.days = [...p.days, dayKey()].sort().slice(-400); saveProgress(p); prog = p; }
-  host.onProgress();
+ 
   r.summary = true;
   const rows = Object.entries(res).map(([id, ok]) => `<li class="${ok ? "ok" : "ko"}"><b>${ok ? "✓" : "↺"}</b> ${esc(lessonById(id)?.title ?? id)}<small>${ok ? "bien retenu : elle reviendra plus tard" : "elle revient demain"}</small></li>`).join("");
   root.innerHTML = `<div class="cs-lesson cs-done" style="--c:${r.drill!.color}"><div class="cs-sum">
@@ -533,13 +531,13 @@ function finishDrill(r: Run, accuracy: number) {
   if (r.drill!.key === "recall") { finishRecall(r, accuracy); return; }
   const d = r.drill!, all = drillStats(), prev = all[d.key];
   all[d.key] = { best: Math.max(prev?.best ?? 0, accuracy), runs: (prev?.runs ?? 0) + 1, last: Math.max(prev?.last ?? 0, Number(dayKey().replace(/-/g, ""))) };
-  try { localStorage.setItem(DRILL_KEY, JSON.stringify(all)); } catch { /* ignore */ }
+  writeJson(DRILL_KEY, all);
   markDone("drill:" + d.key.replace(/-\d+$/, "")); recordSkill(d.key.replace(/-\d+$/, ""), accuracy);
   // révision espacée : un exercice raté revient dans la séance du jour
   if (accuracy < 80) reviewFail(`d|${d.key}`, `exercice · ${d.title}`, `ex:${d.key.replace(/-\d+$/, "")}`);
   else if (accuracy >= 90) reviewPass(`d|${d.key}`);
   const p = loadProgress(); if (!p.days.includes(dayKey())) { p.days = [...p.days, dayKey()].sort().slice(-400); saveProgress(p); prog = p; }
-  host.onProgress();
+ 
   r.summary = true;
   const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : 1;
   root.innerHTML = `<div class="cs-lesson cs-done" style="--c:${d.color}"><div class="cs-sum">
@@ -562,8 +560,6 @@ export function closeCourse() { active = false; clearRhythm(); focus(false); }
 export const courseActive = () => active;
 /** État courant (tests de bout en bout : page ouverte avec ?debug). */
 export const _state = () => (run && !run.summary ? { q: run.q, resolved: run.resolved, outcome: run.outcome, done: run.session.done, retry: run.session.isRetry } : null);
-/** Appelé quand la progression change ailleurs (synchro). */
-export function refreshCourse() { prog = loadProgress(); if (active && !run) renderPath(); }
 export function courseMidi(pitch: number, vel: number, on: boolean) {
   midiSeen = true;
   if (!active || !run || run.summary) return;
@@ -604,7 +600,7 @@ export function initCourse(rootEl: HTMLElement, h: CourseHost) {
     if (q("[data-leave]")) { if (!run || run.summary || run.drill || confirm("Quitter la leçon ? Ta progression dans cette leçon sera perdue.")) leaveLesson(); return; }
     if (q("[data-next]")) { const r = run; if (!r) return; if (r.q.k === "info") { settle(true); return; } if (r.resolved) settle(r.outcome); return; }
     if (q("[data-skip]")) { if (run && !run.resolved) { run.resolved = true; settle(false); } return; }
-    if (q("[data-coursereset]")) { if (confirm("Recommencer le parcours depuis la première leçon ? Les leçons réussies seront effacées sur tous tes appareils.")) { resetCourse(); prog = loadProgress(); renderPath(); } return; }
+    if (q("[data-coursereset]")) { if (confirm("Recommencer le parcours depuis la première leçon ? Les leçons réussies seront effacées.")) { resetCourse(); prog = loadProgress(); renderPath(); } return; }
     if (q("[data-hintbtn]")) { onHint(); return; }
     if (q("[data-replay]")) { const au = run && audioOf(run.q); if (au) playAudio(au); return; }
     if (q("[data-nomidi]")) { const r = run; if (r && !r.resolved) { r.resolved = true; const nx = r.session.skip(); if (!nx) finishLesson(); else renderLesson(); } return; }

@@ -7,12 +7,12 @@
  *      touches noires, 4e doigt faible, triplets 3-4-3, doigt répété…) ;
  *    - un modèle statistique appris sur des partitions doigtées (src/fingeringModel.ts) ;
  *    - les doigtés écrits dans la partition, traités comme contraintes fixes (le reste est complété autour).
- *  Les poids des règles sont eux-mêmes ajustables par entraînement (scripts/train-fingering.ts). */
+ *  Les poids des règles sont eux-mêmes ajustables par entraînement (voir fingeringModel.ts). */
 import { type HandProfile, keyX, isBlackKey, pairLimits, WHITE_CM } from "./hand";
 
 export interface CoreNote { pitch: number; onTime: number; offTime: number; /** doigté imposé (écrit dans la partition) */ fixed?: number; }
 export type LearnedTable = Record<string, Record<string, Record<string, Record<string, number>>>>;
-/** Coûts appris par entraînement discriminant (perceptron structuré, scripts/train-fingering.ts) : clé de situation → coût ajouté.
+/** Coûts appris par entraînement discriminant (perceptron structuré, voir fingeringModel.ts) : clé de situation → coût ajouté.
  *  Clés : `u` + main + doigt + touche (b noire / w blanche) + n note seule / c accord ; `p` + main + écart + doigts (deux notes
  *  voisines d'un accord) ; `t` / `T` + main + l lié / r après un silence + forme (n note, c accord) + écart + doigts (+ couleurs des
  *  deux touches pour `T`) ; `3` + main + classes des deux écarts (voir ivClass) + trois doigts (trois notes seules liées) ; `C` + main +

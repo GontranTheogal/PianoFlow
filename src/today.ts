@@ -12,17 +12,17 @@ import * as Daily from "./daily";
 import * as Skills from "./skills";
 import { dayNum } from "./review";
 import { dueLessons } from "./recall";
+import { esc } from "./html";
+import { readStr, writeStr } from "./storage";
 
 export interface TodayHost { go(action: string): void; }
 let host: TodayHost, root: HTMLElement;
 const GOAL_KEY = "pianoflow-goal";
-const goal = () => { try { return Number(localStorage.getItem(GOAL_KEY)) || 20; } catch { return 20; } };
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+const goal = () => Number(readStr(GOAL_KEY, "")) || 20;
 
 export interface PlanItem { icon: string; title: string; detail: string; min: number; action: string; /** tâche cochée quand elle est faite (Daily) */ tag: string; /** rang de priorité quand le temps manque */ key?: string; }
 
 const unitDone = (p: ReturnType<typeof loadProgress>, id: string) => { const u = UNITS.find((x) => x.id === id); return !!u && u.lessons.every((l) => lessonDone(p, l.id)); };
-const unitStarted = (p: ReturnType<typeof loadProgress>, id: string) => { const u = UNITS.find((x) => x.id === id); return !!u && u.lessons.some((l) => lessonDone(p, l.id)); };
 
 /** Niveau de répertoire conseillé d'après le parcours (des leçons-repères, pour qu'une leçon ajoutée ne le fasse pas reculer). */
 export function repLevel(p = loadProgress()): number {
@@ -335,12 +335,12 @@ export function initToday(r: HTMLElement, h: TodayHost) {
     const b = (e.target as HTMLElement).closest("[data-act]") as HTMLElement | null; if (!b) return;
     const a = b.dataset.act!;
     if (a === "td:progress" || a === "td:back") { view = a === "td:progress" ? "progress" : "plan"; openToday(); return; }
-    if (a.startsWith("td:goal:")) { try { localStorage.setItem(GOAL_KEY, a.slice(8)); } catch { /* ignore */ } openToday(); return; }
+    if (a.startsWith("td:goal:")) { writeStr(GOAL_KEY, a.slice(8)); openToday(); return; }
     if (a === "td:begin" || a === "td:placement") {
-      try { localStorage.setItem(WELCOME_KEY, "1"); } catch { /* ignore */ }
+      writeStr(WELCOME_KEY, "1");
       host.go(a === "td:begin" ? `lesson:${LESSONS[0].id}` : "tab:course"); return;
     }
     host.go(a);
   });
-  root.addEventListener("change", (e) => { const t = e.target as HTMLSelectElement; if (t.id === "tdGoal") { try { localStorage.setItem(GOAL_KEY, t.value); } catch { /* ignore */ } openToday(); } });
+  root.addEventListener("change", (e) => { const t = e.target as HTMLSelectElement; if (t.id === "tdGoal") { writeStr(GOAL_KEY, t.value); openToday(); } });
 }

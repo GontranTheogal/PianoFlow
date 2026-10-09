@@ -4,6 +4,7 @@
  *  enfin le morceau entier en rythme. Une étape est validée par un passage réussi (score ≥ seuil).
  *  Logique pure ; la progression est rangée sous forme de nombres (fusion « meilleur des deux » entre appareils). */
 
+import { readJson, writeJson } from "./storage";
 export type CoachHand = "R" | "L" | "both";
 export interface CoachStage { label: string; hand: CoachHand; mode: "step" | "rhythm"; speed: number; pass: number; }
 export interface Section { a: number; b: number; }   // mesures [a, b[
@@ -118,6 +119,6 @@ export function progressRatio(p: CoachProgress, secs: Section[], stages: CoachSt
 
 // ── stockage ──
 const KEY = "pianoflow-coach";
-export function loadAll(): Record<string, CoachProgress> { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } }
+export function loadAll(): Record<string, CoachProgress> { return readJson<Record<string, CoachProgress>>(KEY, {}); }
 export function loadCoach(id: string): CoachProgress { const p = loadAll()[id]; return { sec: p?.sec ?? {}, full: p?.full ?? 0, part: p?.part ?? {}, pct: p?.pct ?? 0, at: p?.at ?? 0 }; }
-export function saveCoach(id: string, p: CoachProgress) { try { const all = loadAll(); all[id] = p; localStorage.setItem(KEY, JSON.stringify(all)); } catch { /* ignore */ } }
+export function saveCoach(id: string, p: CoachProgress) { const all = loadAll(); all[id] = p; writeJson(KEY, all); }

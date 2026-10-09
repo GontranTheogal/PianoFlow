@@ -1,13 +1,14 @@
 /** Suivi quotidien : temps de pratique RÉEL (minutes où tu joues / réponds) et tâches de la séance du jour accomplies.
  *  Stocké par jour, uniquement des nombres et des listes : fusionnable entre appareils. */
 import { dayKey } from "./course/engine";
+import { readJson, writeJson } from "./storage";
 
 export interface DayRec { s: number; done: string[]; }
 const KEY = "pianoflow-daily";
-function readAll(): Record<string, DayRec> { try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch { return {}; } }
+function readAll(): Record<string, DayRec> { return readJson<Record<string, DayRec>>(KEY, {}); }
 function writeAll(a: Record<string, DayRec>) {
   const keys = Object.keys(a).sort(); while (keys.length > 120) delete a[keys.shift()!];   // 4 mois d'historique
-  try { localStorage.setItem(KEY, JSON.stringify(a)); } catch { /* ignore */ }
+  writeJson(KEY, a);
 }
 export function day(d = dayKey()): DayRec { const r = readAll()[d]; return { s: r?.s ?? 0, done: r?.done ?? [] }; }
 export function markDone(tag: string) {

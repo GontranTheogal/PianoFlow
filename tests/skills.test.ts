@@ -6,7 +6,7 @@ const S = await import("../src/skills");
 const { buildPlan } = await import("../src/today");
 const { LESSONS } = await import("../src/course/curriculum");
 const { dayNum } = await import("../src/review");
-const { mergeKey } = await import("../src/syncMerge");
+const { mergeKey } = await import("../src/progressMerge");
 const day = (s: string) => new Date(s + "T12:00:00").getTime();
 
 // maîtrise : le premier résultat la fixe, les suivants la déplacent de moins en moins
