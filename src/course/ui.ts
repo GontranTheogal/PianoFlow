@@ -307,16 +307,17 @@ function settle(good: boolean) {
   renderLesson();
 }
 
-function onKey(m: number, fromMidi: boolean, vel = 90) {
+/** `lag` : ms écoulées entre la frappe et son annonce (piano acoustique au micro). */
+function onKey(m: number, fromMidi: boolean, vel = 90, lag = 0) {
   const r = run; if (!r || !active) return;
   if (!fromMidi || host.soundOnPress()) host.play(m, 700);
   // après une erreur, une touche du piano vaut « Continuer » : les mains restent sur le clavier
   // (pas tout de suite, pour qu'une note jouée dans l'élan ne fasse pas sauter la correction)
   if (r.resolved) { if (fromMidi && !r.outcome && r.q.k !== "piece" && performance.now() - (r.resolvedAt ?? 0) > 800) settle(false); return; }
   const q = r.q;
-  if (q.k === "rhythm") { tapRhythm(); return; }
+  if (q.k === "rhythm") { tapRhythm(lag); return; }
   if (!kbd) return;
-  if (q.k === "touch") { touchPress(q, m, fromMidi, vel); return; }
+  if (q.k === "touch") { touchPress(q, m, fromMidi, vel, lag); return; }
   if (q.k === "pedal") { pedalNote(q, m); return; }
   if (q.k === "improv") { if (r.improv?.on) { r.improv.notes.push(m); kbd.mark(m, q.scale.includes(m % 12) ? "ok" : "bad"); setTimeout(() => { if (run === r && r.q === q) markScale(q); }, 250); } return; }
   if (q.k === "press") {
@@ -344,7 +345,7 @@ function onKey(m: number, fromMidi: boolean, vel = 90) {
     }
   } else if (q.k === "chord") {
     if (!r.chord) r.chord = new ChordCollector(q.pcs, q.bass);
-    const res = r.chord.add(m, performance.now());
+    const res = r.chord.add(m, performance.now() - lag);
     kbd.mark(m, res === "bad" ? "bad" : "sel");
     if (res === "ok") { r.chord.pressed.forEach((k) => kbd!.mark(k, "ok")); flash(true, r.hinted ? "Juste, mais avec l'indice : on la refait" : `${q.name} : accord réussi`, { counts: !r.hinted }); }
     else if (res === "bad") {
@@ -356,20 +357,20 @@ function onKey(m: number, fromMidi: boolean, vel = 90) {
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
 // ── toucher : nuances / legato / staccato (il faut les vélocités et les relâchés du clavier MIDI) ──
-function touchPress(q: Extract<Q, { k: "touch" }>, m: number, fromMidi: boolean, vel: number) {
+function touchPress(q: Extract<Q, { k: "touch" }>, m: number, fromMidi: boolean, vel: number, lag = 0) {
   const r = run!; const hint = root.querySelector("#csHint") as HTMLElement;
   if (!fromMidi) { hint.textContent = "Avec le clavier de l'écran, l'appli ne peut pas mesurer la force ni la durée : joue sur ton piano MIDI, ou passe."; return; }
   const want = q.notes[r.touch!.length];
   if (m !== want) { kbd!.mark(m, "bad"); hint.textContent = `Ce n'est pas la bonne note : recommence la suite depuis le début (${q.notes.map(fr).join(" – ")}).`; r.touch = []; r.mistakes++; return; }
   kbd!.clear(); kbd!.mark(m, "ok");
-  r.touch!.push({ m, on: performance.now(), vel });
+  r.touch!.push({ m, on: performance.now() - lag, vel });
   hint.textContent = `${r.touch!.length} / ${q.notes.length}`;
   if (r.touch!.length === q.notes.length) setTimeout(() => finishTouch(q), q.want === "legato" || q.want === "staccato" ? 700 : 50);
 }
-function keyUp(m: number) {
+function keyUp(m: number, lag = 0) {
   const r = run; if (!r || r.resolved) return;
   const ev = [...(r.touch ?? [])].reverse().find((e) => e.m === m && e.off === undefined);
-  if (ev) ev.off = performance.now();
+  if (ev) ev.off = performance.now() - lag;
 }
 function finishTouch(q: Extract<Q, { k: "touch" }>) {
   const r = run; if (!r || r.q !== q || r.resolved) return;
@@ -459,9 +460,10 @@ function startRhythm(listen: boolean) {
   st.timers.push(window.setTimeout(() => { st.phase = "rec"; if (hint) hint.textContent = "À toi !"; }, (bpb - 0.4) * beat));
   st.timers.push(window.setTimeout(() => finishRhythm(st), bpb * beat + total * beat + 0.45 * beat));
 }
-function tapRhythm() {
+function tapRhythm(lag = 0) {
   const st = run?.rhythm; if (!st) return;
-  if (st.phase === "count" || st.phase === "rec") { if (performance.now() > st.t0 - 0.5 * (60000 / (run!.q as any).bpm)) st.taps.push(performance.now()); }
+  const t = performance.now() - lag;
+  if (st.phase === "count" || st.phase === "rec") { if (t > st.t0 - 0.5 * (60000 / (run!.q as any).bpm)) st.taps.push(t); }
   const pad = root.querySelector("#csTap") as HTMLElement | null; pad?.classList.add("hit"); setTimeout(() => pad?.classList.remove("hit"), 90);
 }
 function finishRhythm(st: RhythmState) {
@@ -561,10 +563,10 @@ export function closeCourse() { active = false; clearRhythm(); focus(false); }
 export const courseActive = () => active;
 /** État courant (tests de bout en bout : page ouverte avec ?debug). */
 export const _state = () => (run && !run.summary ? { q: run.q, resolved: run.resolved, outcome: run.outcome, done: run.session.done, retry: run.session.isRetry } : null);
-export function courseMidi(pitch: number, vel: number, on: boolean) {
+export function courseMidi(pitch: number, vel: number, on: boolean, lag = 0) {
   midiSeen = true;
   if (!active || !run || run.summary) return;
-  if (on) onKey(pitch, true, vel); else keyUp(pitch);
+  if (on) onKey(pitch, true, vel, lag); else keyUp(pitch, lag);
 }
 /** Pédale de sustain (CC64) du clavier MIDI. */
 export function coursePedal(down: boolean) {

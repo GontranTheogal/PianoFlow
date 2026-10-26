@@ -17,6 +17,11 @@ export class Synth {
   private ready: Promise<void>;
   private metroTimer: number | undefined;
   volume = 0.8;
+  /** Chaque son joué par l'appli (le micro, s'il écoute un piano acoustique, doit savoir que ce n'est pas le pianiste). */
+  onPlay: ((pitch: number, ms: number) => void) | null = null;
+  onClick: ((freq: number, ms: number) => void) | null = null;
+  /** Délai (s) entre le lancement d'un son et sa sortie des haut-parleurs. */
+  get outputLatency(): number { return (this.ctx as AudioContext & { outputLatency?: number }).outputLatency || this.ctx.baseLatency || 0.05; }
 
   constructor() {
     this.ready = fetch(`${import.meta.env.BASE_URL}piano-samples.json`)
@@ -52,6 +57,7 @@ export class Synth {
 
   async playNote(pitch: number, durMs = 1200, velocity = 0.8) {
     this.ensure();
+    this.onPlay?.(pitch, durMs);
     await this.ready;
     const samplePitch = this.nearest(pitch);
     const buf = samplePitch !== null ? await this.bufferFor(samplePitch) : null;
@@ -85,6 +91,7 @@ export class Synth {
 
   click(accent: boolean) {
     this.ensure();
+    this.onClick?.(accent ? 1500 : 1000, 60);
     const t0 = this.ctx.currentTime;
     const osc = this.ctx.createOscillator(); osc.type = "square"; osc.frequency.value = accent ? 1500 : 1000;
     const gain = this.ctx.createGain();

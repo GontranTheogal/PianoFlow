@@ -1,4 +1,4 @@
-import { initMidi } from "./midi";
+import { initMidi, type MidiStatus } from "./midi";
 import { loadScore, annotateHands, flatten, preloadScoreEngine, type Step, type Note, type Meter } from "./score";
 import { RhythmJudge, type TimedNote, type RhythmSummary } from "./rhythm";
 import * as Coach from "./coach";
@@ -36,6 +36,7 @@ import { removeKey } from "./storage";
 import { $, store, toast, cleanName } from "./app/dom";
 import { initLibraryView, renderLibraryHome, openByName, openRepertoire } from "./app/libraryView";
 import { initSettings } from "./app/settings";
+import { initMic, micBadge } from "./app/micView";
 import type { AppMode, View, FingerMode, Tab, ViewName, OpenOpts } from "./app/types";
 
 const cssVar = (n: string) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -273,6 +274,8 @@ function renderFrame() {
   }
   // notes qui tombent
   if (view === "fall") falling.render(player.playhead, player.mode, run ? run.hit : new Set(follower.hitNotes.map((n) => n.id)), new Set(wait ? current.map((n) => n.id) : []));
+  // micro : les notes attendues ici aident à les reconnaître (jouées doucement, en octave, mains décalées)
+  if (mic.open) mic.setHint(micHint());
 
   // partition : elle glisse sous le curseur central (lissée en mode attente, exacte en lecture)
   if (steps.length && ensureLayout()) {
@@ -601,9 +604,10 @@ function rhythmTick() {
   for (const n of r.judge.advance(ph)) noteEls.get(n.id)?.classList.add("r-miss");
   if (ph >= r.end) finishRhythm();
 }
-function rhythmPress(pitch: number) {
+/** `lag` : ms entre la frappe et son annonce (micro) ; la note est jugée à l'instant où elle a été frappée. */
+function rhythmPress(pitch: number, lag = 0) {
   const r = run!;
-  const res = r.judge.press(pitch, player.playhead);
+  const res = r.judge.press(pitch, player.playhead - lag * player.tempo);
   if (res.verdict === "wrong") { piano.press(pitch, "bad"); return; }
   const good = res.verdict === "perfect" || res.verdict === "good";
   piano.press(pitch, "ok");
@@ -970,12 +974,12 @@ $("homeBtnBrand").addEventListener("click", () => showTab("today"));
 document.addEventListener("click", (e) => { if ((e.target as HTMLElement).closest("[data-exback]")) showTab(exBack); });
 
 initTech($("techView"), {
-  play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, soundOnPress: () => soundOnPress,
+  play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, soundOnPress: keySound,
   openPractice: (file) => { void openFile(file, { library: false, back: "tech", tag: "warmup" }); },
 });
-initSolfege($("solfegeView"), { play: (p, ms) => { void synth.playNote(p, ms ?? 900); }, soundOnPress: () => soundOnPress });
+initSolfege($("solfegeView"), { play: (p, ms) => { void synth.playNote(p, ms ?? 900); }, soundOnPress: keySound });
 initCourse($("courseView"), {
-  play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, click: (accent) => synth.click(accent), soundOnPress: () => soundOnPress,
+  play: (p, ms) => { void synth.playNote(p, ms ?? 700); }, click: (accent) => synth.click(accent), soundOnPress: keySound,
   openPiece: (xml, title, o) => { void openFile(new File([xml], title + ".musicxml", { type: "application/xml" }), { library: false, back: "course", hands: o.hands, speed: o.mode === "rhythm" ? o.minSpeed : 100, hook: { pass: o.pass, mode: o.mode, minSpeed: o.minSpeed, hands: o.hands, cb: o.onResult } }); },
   onDrillExit: () => showTab(drillReturn),
 });
@@ -1033,16 +1037,17 @@ const soundBox = $("soundOnPress") as HTMLInputElement;
 soundBox.checked = soundOnPress;
 soundBox.addEventListener("change", () => { soundOnPress = soundBox.checked; store.set("keySound", soundOnPress ? "1" : "0"); });
 
-// ───────────── clavier MIDI ─────────────
-function onKey(pitch: number, velocity: number, on: boolean) {
+// ───────────── clavier MIDI, ou piano acoustique au micro ─────────────
+/** Une touche enfoncée ou relâchée. `lag` (micro) : ms écoulées depuis la frappe réelle. */
+function onKey(pitch: number, velocity: number, on: boolean, lag = 0) {
   if (on) Daily.activity();
-  if (courseActive()) { courseMidi(pitch, velocity, on); return; }
+  if (courseActive()) { courseMidi(pitch, velocity, on, lag); return; }
   if (solfegeActive()) { solfegeMidi(pitch, velocity, on); return; }
   if (techActive()) { techMidi(pitch, velocity, on); return; }
   if (!on) { piano.release(pitch); return; }
-  if (soundOnPress) synth.playNote(pitch, sustain ? 2600 : 700, Math.max(0.25, Math.min(1, velocity / 127)));
+  if (keySound()) synth.playNote(pitch, sustain ? 2600 : 700, Math.max(0.25, Math.min(1, velocity / 127)));
   if (!steps.length || $("practiceView").classList.contains("hidden")) { piano.press(pitch, "ok"); return; }
-  if (run) { if (player.mode === "play") rhythmPress(pitch); return; }
+  if (run) { if (player.mode === "play") rhythmPress(pitch, lag); return; }
   if (appMode === "rhythm" && !listening) { piano.press(pitch, "ok"); return; }
   if (player.mode === "wait") {
     const exp = follower.expected.find((n) => n.pitch === pitch);
@@ -1055,11 +1060,31 @@ function onKey(pitch: number, velocity: number, on: boolean) {
 let sustain = false;
 /** pédale pendant le jeu en rythme (temps de la partition) et indications de pédale du morceau ouvert */
 let pedalEvents: { t: number; down: boolean }[] = [], pieceMarks: PedalMark[] = [];
-initMidi(onKey, (s) => {
-  // le nom du clavier plutôt qu'un « connecté » générique : on voit tout de suite si c'est bien le sien
-  const el = $("midiStatus"), label = s.state === "ok" ? s.names[0] : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
+let midiState: MidiStatus = { state: "none", names: [], detail: "Recherche du clavier MIDI…" };
+/** Bandeau du haut : le micro et le piano choisi, ou le nom du clavier MIDI (on voit tout de suite si c'est bien le sien). */
+function renderInputStatus() {
+  const el = $("midiStatus"), m = micBadge();
+  if (m) { el.innerHTML = `<span>${icon("mic")}</span> <b>${esc(m.label)}</b>`; el.title = m.title; el.classList.toggle("ok", m.ok); return; }
+  const s = midiState, label = s.state === "ok" ? s.names[0] : s.state === "error" ? "MIDI indisponible" : "Pas de clavier";
   el.innerHTML = `<span>${icon("piano")}</span> <b>${esc(label)}</b>`; el.title = s.detail; el.classList.toggle("ok", s.state === "ok");
-},
+}
+$("midiStatus").addEventListener("click", () => $("settingsPanel").classList.remove("closed"));
+const mic = initMic({ onNote: onKey, onChange: renderInputStatus });
+// les sons de l'appli (autre main, démo, métronome) sortent des haut-parleurs : le micro ne doit pas les prendre pour le pianiste
+// (latence de sortie relue à chaque son : elle n'est connue qu'une fois le son démarré, et change avec un casque Bluetooth)
+synth.onPlay = (p, ms) => { mic.outLatency = synth.outputLatency; mic.echoNote(p, ms); };
+synth.onClick = (f, ms) => { mic.outLatency = synth.outputLatency; mic.echoTone(f, ms); };
+/** Faire sonner ses touches : jamais avec un piano acoustique (il sonne déjà, et le micro réentendrait l'appli). */
+function keySound() { return soundOnPress && !mic.open; }
+/** Notes attendues à l'instant présent, pour le micro : celles du pas courant, ou celles autour de la tête de lecture en rythme. */
+function micHint(): number[] {
+  if (!steps.length || $("practiceView").classList.contains("hidden")) return [];
+  if (player.mode === "wait") return follower.expected.map((n) => n.pitch);
+  const t = player.playhead, w = 300 * player.tempo, out: number[] = [];
+  for (const n of sortedNotes) { if (n.onTime > t + w) break; if (n.onTime >= t - w && isShown(n)) out.push(n.pitch); }
+  return out;
+}
+initMidi(onKey, (s) => { midiState = s; renderInputStatus(); },
   (cc, v) => { if (cc !== 64) return; const was = sustain; sustain = v >= 64; coursePedal(sustain); if (run && was !== sustain) pedalEvents.push({ t: player.playhead, down: sustain }); });
 
 // ───────────── démarrage ─────────────
@@ -1072,7 +1097,7 @@ syncHeaderHeight();
 player.restart();
 setView(view);
 showTab(currentView);
-if (location.search.includes("debug")) (window as any).__pf = { course: courseState, showTab, midi: (p: number) => onKey(p, 100, true), expected: () => follower.expected.map((n) => n.pitch), mode: () => appMode, setMode: (m: AppMode) => setAppMode(m), start: () => onPlay(), playhead: () => player.playhead, running: () => !!run, runNotes: () => (run ? run.notes.map((n) => [n.pitch, n.onTime]) : []), fingers: () => allNotes.map((n) => [n.hand, n.pitch, n.finger]), lessons: () => LESSONS.map((l) => ({ id: l.id, unit: l.unit.id })), notes: () => allNotes.map((n) => ({ id: n.id, hand: n.hand, pitch: n.pitch, finger: n.finger })), repXml: (id: string) => repXml(repById(id)!), lesson: (id: string) => { showTab("course"); startLessonById(id); }, key: (p: number, v: number, on: boolean) => onKey(p, v, on), pedal: (down: boolean) => { sustain = down; coursePedal(down); } };
+if (location.search.includes("debug")) (window as any).__pf = { course: courseState, showTab, midi: (p: number) => onKey(p, 100, true), expected: () => follower.expected.map((n) => n.pitch), step: () => follower.index, mode: () => appMode, setMode: (m: AppMode) => setAppMode(m), start: () => onPlay(), playhead: () => player.playhead, running: () => !!run, runNotes: () => (run ? run.notes.map((n) => [n.pitch, n.onTime]) : []), fingers: () => allNotes.map((n) => [n.hand, n.pitch, n.finger]), lessons: () => LESSONS.map((l) => ({ id: l.id, unit: l.unit.id })), notes: () => allNotes.map((n) => ({ id: n.id, hand: n.hand, pitch: n.pitch, finger: n.finger })), repXml: (id: string) => repXml(repById(id)!), lesson: (id: string) => { showTab("course"); startLessonById(id); }, key: (p: number, v: number, on: boolean) => onKey(p, v, on), pedal: (down: boolean) => { sustain = down; coursePedal(down); } };
 // iPad : le sélecteur de fichiers iOS grise parfois .mxl / .musicxml quand "accept" les liste → on le retire.
 if (/iPad|iPhone|Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1) $("file").removeAttribute("accept");
 // Demande au navigateur de ne pas purger la bibliothèque (IndexedDB) quand l'espace manque.

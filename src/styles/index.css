@@ -1,6 +1,7 @@
 @import "./00-tokens.css";
 @import "./10-header-nav.css";
 @import "./20-settings.css";
+@import "./25-mic.css";
 @import "./30-library.css";
 @import "./40-practice.css";
 @import "./50-solfege-tech.css";

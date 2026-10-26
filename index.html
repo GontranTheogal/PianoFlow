@@ -29,13 +29,27 @@
     </nav>
     <input type="file" id="file" accept=".xml,.musicxml,.mxl,.pdf,.mid,.midi" />
     <div class="grow"></div>
-    <span id="midiStatus" title="Recherche du clavier MIDI…"><span><svg aria-hidden="true" focusable="false" class="ic lucide lucide-piano" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M10 13v4" /> <path d="M14 13v4" /> <path d="M18 13v4" /> <path d="M2 13h20" /> <path d="M22 11.5A3.5 3.5 0 0018.5 8a3.52 3.52 0 01-3.173-2A7 7 0 002 9v10a2 2 0 002 2h16a2 2 0 002-2z" /> <path d="M6 13v4" /> </svg></span> <b>Recherche…</b></span>
+    <button type="button" id="midiStatus" title="Recherche du clavier MIDI…"><span><svg aria-hidden="true" focusable="false" class="ic lucide lucide-piano" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M10 13v4" /> <path d="M14 13v4" /> <path d="M18 13v4" /> <path d="M2 13h20" /> <path d="M22 11.5A3.5 3.5 0 0018.5 8a3.52 3.52 0 01-3.173-2A7 7 0 002 9v10a2 2 0 002 2h16a2 2 0 002-2z" /> <path d="M6 13v4" /> </svg></span> <b>Recherche…</b></button>
     <button class="btn clay icon" id="toggleSettings" title="Réglages" aria-label="Réglages"><svg aria-hidden="true" focusable="false" class="ic lucide lucide-settings" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /> </svg></button>
   </header>
 
   <!-- RÉGLAGES -->
   <div id="settingsPanel" class="drawer closed">
     <div class="drawer-head"><h3>Réglages</h3><button id="closeSettings">✕</button></div>
+    <div class="section" id="pianoSection">
+      <h4>Mon piano</h4>
+      <div class="row"><label>Je joue avec</label><div class="seg theme-seg" id="inputSeg"><button data-input="midi">Clavier MIDI</button><button data-input="mic">Micro</button></div></div>
+      <div class="hint" id="inputHint"></div>
+      <div id="micBox" class="hidden">
+        <div class="row"><label for="pianoSel">Piano</label><select id="pianoSel"></select></div>
+        <div class="mic-meter" aria-hidden="true"><i id="micLevel"></i></div>
+        <div class="hint mic-state" id="micState" aria-live="polite"></div>
+        <button class="btn clay hidden" id="micRetry">Réessayer</button>
+        <div class="mic-btns"><button class="btn clay" id="pianoAdd">＋ Ajouter un piano</button><button class="btn clay" id="pianoManage">Réglages du piano</button><button class="btn clay" id="micTest">Tester</button></div>
+        <div class="row"><label>Sensibilité</label><div class="seg theme-seg" id="micSens"><button data-sens="0">Faible</button><button data-sens="1">Normale</button><button data-sens="2">Forte</button></div></div>
+        <div class="hint">Faible : pièce bruyante (on parle, la télé). Forte : piano joué très doucement, ou micro loin du piano. Les sons de l'appli (notes jouées, métronome) ne sont pas pris pour les tiens.</div>
+      </div>
+    </div>
     <div class="section" id="handSection">
       <h4>Ma main</h4>
       <div class="hint">L'appli calcule les doigtés pour <b>ta</b> main : plus elle est petite, plus les grands écarts sont évités et remplacés par un déplacement.</div>
@@ -66,7 +80,7 @@
       <h4>Son</h4>
       <div class="row"><label>Volume</label><input type="range" id="volume" min="0" max="100" value="80" /></div>
       <div class="row"><label>Faire sonner mes touches</label><label class="toggle"><input type="checkbox" id="soundOnPress" /><span></span></label></div>
-      <div class="hint">Le morceau joue la main que tu ne travailles pas ; tes touches, elles, sonnent grâce à cette option. Désactive-la si ton piano numérique a déjà ses haut-parleurs.</div>
+      <div class="hint">Le morceau joue la main que tu ne travailles pas ; tes touches, elles, sonnent grâce à cette option. Désactive-la si ton piano numérique a déjà ses haut-parleurs. Avec le micro (piano acoustique), elle est coupée d'office.</div>
       <div class="row"><label>Métronome</label><div style="display:flex;gap:8px;align-items:center"><input type="number" id="bpm" min="40" max="220" value="80" /><label class="toggle"><input type="checkbox" id="metro" /><span></span></label></div></div>
     </div>
   </div>
@@ -147,6 +161,9 @@
   <div id="exercisesView" class="hidden"></div>
   <div id="solfegeView" class="hidden"></div>
   <div id="techView" class="hidden"></div>
+
+  <!-- PIANO ACOUSTIQUE : ajout, calibrage, test (src/app/micView.ts) -->
+  <div id="micWizard" class="hidden" role="dialog" aria-modal="true" aria-labelledby="mwTitle"><div class="mw-box" id="mwBox"></div></div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>

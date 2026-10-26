@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build && node scripts/inject-precache.mjs",
     "preview": "vite preview",
-    "test": "tsx tests/fingering.test.ts && tsx tests/course.test.ts && tsx tests/repertoire.test.ts && tsx tests/practice.test.ts && tsx tests/plan.test.ts && tsx tests/skills.test.ts && tsx tests/refonte.test.ts && tsx tests/recall.test.ts",
+    "test": "tsx tests/fingering.test.ts && tsx tests/course.test.ts && tsx tests/repertoire.test.ts && tsx tests/practice.test.ts && tsx tests/plan.test.ts && tsx tests/skills.test.ts && tsx tests/refonte.test.ts && tsx tests/recall.test.ts && tsx tests/mic.test.ts",
     "test:e2e": "node tests/e2e/smoke.mjs"
   },
   "dependencies": {

@@ -1,0 +1,39 @@
+/* ── PIANO ACOUSTIQUE : micro, ajout et calibrage d'un piano ── */
+.mic-meter { height:6px; border-radius:99px; background:var(--clay-1); box-shadow:var(--shadow-in); overflow:hidden; margin:2px 0 10px; }
+.mic-meter i { display:block; height:100%; width:0; border-radius:99px; background:var(--ok); }
+.mic-meter.big { height:12px; margin:14px 0; }
+.mic-state.bad { color:var(--ink-bad); }
+.mic-btns { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+/* boutons en relief sur le fond de la section (comme les préréglages de la main) */
+.mic-btns .btn, #micRetry { background:var(--clay-1); box-shadow:var(--shadow-out-sm); padding:8px 12px; }
+#micRetry { margin:-4px 0 12px; }
+#pianoSel { flex:1; min-width:0; max-width:200px; }
+#pianoManage:disabled { opacity:.45; cursor:default; transform:none; }
+
+#micWizard { position:fixed; inset:0; z-index:60; background:#0008; display:flex; align-items:center; justify-content:center; padding:16px; }
+.mw-box { background:var(--bg-1); color:var(--text); border-radius:24px; width:min(720px, 100%); max-height:calc(100dvh - 32px); overflow:auto; padding:20px 22px; box-shadow:0 20px 60px #0008; }
+.mw-head { display:flex; align-items:center; gap:12px; margin-bottom:6px; } .mw-head h2 { margin:0; font-size:20px; flex:1; }
+.mw-x { border:none; background:var(--clay-2); color:var(--muted); width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; flex:none; font-family:inherit; }
+.mw-text { color:var(--muted); font-size:15px; line-height:1.55; margin:8px 0 12px; } .mw-text.center { text-align:center; } .mw-text b { color:var(--text); }
+.mw-small { color:var(--muted); font-size:12.5px; line-height:1.5; margin:8px 0; }
+.mw-field { display:flex; flex-direction:column; gap:6px; font-size:13px; font-weight:700; color:var(--muted); margin:10px 0; }
+.mw-field input, .mw-field select { font-size:15px; width:100%; }
+.mw-btns { display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end; margin-top:16px; }
+.mw-btns.col { flex-direction:column; align-items:stretch; }
+.sf-btn.danger { background:var(--tint-bad); color:var(--ink-bad); }
+.mw-prog { flex:1; display:flex; align-items:center; gap:12px; font-size:14px; white-space:nowrap; }
+.mw-key { text-align:center; margin:8px 0 2px; } .mw-key b { display:block; font-size:46px; line-height:1.1; } .mw-key small { color:var(--muted); font-size:14px; }
+/* où est la touche sur les 88 : une bande, une marque */
+.mw-strip { position:relative; height:10px; border-radius:99px; margin:10px 0 2px; box-shadow:var(--shadow-in);
+  background:repeating-linear-gradient(90deg, var(--clay-3) 0 1px, var(--clay-2) 1px calc(100% / 52)); }
+.mw-strip i { position:absolute; top:-4px; width:6px; height:18px; margin-left:-3px; border-radius:3px; background:var(--primary); }
+.mw-fb { text-align:center; min-height:46px; font-size:15px; line-height:1.5; margin:8px 0; color:var(--muted); }
+.mw-fb.ok { color:var(--ink-ok); font-weight:800; } .mw-fb.bad { color:var(--ink-bad); } .mw-fb.warn { color:var(--ink-warn); }
+.mw-fb .sf-btn { margin-top:8px; }
+.mw-kbd { border-radius:14px; height:clamp(110px, 20vh, 170px); margin-top:6px; }
+.mw-kbd.tall { height:clamp(100px, 22vw, 190px); }
+.mw-heard { text-align:center; font-size:26px; font-weight:800; min-height:40px; margin:8px 0; }
+.mw-chart { width:100%; height:auto; display:block; margin:8px 0; }
+.mw-chart .ok { fill:var(--ok); } .mw-chart .mid { fill:var(--ink-orange); } .mw-chart .bad { fill:var(--bad); }
+.mw-chart line { stroke:var(--line); stroke-width:1.5; } .mw-chart text { fill:var(--muted); font-size:12px; font-family:var(--font); }
+@media (max-width:560px) { .mw-box { padding:16px; border-radius:18px; } .mw-key b { font-size:38px; } .mw-btns { justify-content:stretch; } .mw-btns .sf-btn { flex:1; } }

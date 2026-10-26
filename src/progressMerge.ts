@@ -2,8 +2,9 @@
 
 /** Clés où le plus récent gagne (réglages qui peuvent baisser) ; les autres sont fusionnées par « meilleur des deux » (records, étoiles…). */
 export const LATEST_WINS: Record<string, string> = { "pianoflow-hand": "updatedAt" };
-/** Clés dont chaque entrée est datée : entrée par entrée, la plus récente gagne (corrections de doigtés par morceau, maîtrise d'une compétence, qui peut baisser). */
-export const LATEST_PER_ENTRY: Record<string, string> = { "pianoflow-fingerings": "at", "pianoflow-skills": "t", "pianoflow-recall": "t" };
+/** Clés dont chaque entrée est datée : entrée par entrée, la plus récente gagne (corrections de doigtés par morceau, maîtrise d'une compétence,
+ *  qui peut baisser ; pianos calibrés, qu'on ne mélange jamais : leurs mesures vont ensemble). */
+export const LATEST_PER_ENTRY: Record<string, string> = { "pianoflow-fingerings": "at", "pianoflow-skills": "t", "pianoflow-recall": "t", "pianoflow-pianos": "updatedAt" };
 
 /** Clés jamais recopiées depuis un fichier importé (pollution de prototype). */
 const UNSAFE = new Set(["__proto__", "constructor", "prototype"]);

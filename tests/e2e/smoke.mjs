@@ -6,7 +6,8 @@ import { chromium } from "playwright";
 
 const server = await preview({ preview: { port: 4180, strictPort: true } });
 const url = server.resolvedUrls.local[0];
-const browser = await chromium.launch();
+// faux micro (son de test de Chromium), accordé sans fenêtre d'autorisation
+const browser = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
 const errors = [];
 const ok = (name) => console.log("  ✓ " + name);
 try {
@@ -29,8 +30,25 @@ try {
   await page.click('#themeSeg [data-theme="auto"]');
   const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 5000 }), page.click("#backupExport")]);
   assert.match(dl.suggestedFilename(), /^pianoflow-sauvegarde-.*\.json$/);
-  await page.click("#closeSettings");
   ok("réglages : thème sombre, export de la sauvegarde");
+
+  // piano acoustique : le micro s'ouvre, l'assistant s'affiche (ajout d'un piano, test), puis retour au clavier MIDI
+  await page.click('#inputSeg [data-input="mic"]');
+  await page.waitForFunction(() => document.getElementById("midiStatus").classList.contains("ok"), null, { timeout: 8000 });
+  assert.match(await page.textContent("#midiStatus"), /Micro/);
+  await page.click("#micTest");
+  assert.ok(await page.locator("#micWizard #mwKbd svg").isVisible());
+  await page.click('#micWizard [data-mw="close"]');
+  await page.click("#toggleSettings");
+  await page.click("#pianoAdd");
+  assert.ok(await page.locator("#mwName").isVisible());
+  await page.click('#micWizard [data-mw="close"]');
+  assert.ok(await page.locator("#micWizard").isHidden());
+  await page.click("#toggleSettings");
+  await page.click('#inputSeg [data-input="midi"]');
+  assert.doesNotMatch(await page.textContent("#midiStatus"), /Micro/);
+  await page.click("#closeSettings");
+  ok("micro : ouverture, assistant d'ajout d'un piano, test de reconnaissance");
 
   await page.locator(".rep-card [data-rep]:not([data-coach])").first().click();
   await page.waitForSelector("#score svg .note", { timeout: 30000 });

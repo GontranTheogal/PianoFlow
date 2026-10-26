@@ -248,9 +248,9 @@ const welcomed = () => { try { return !!localStorage.getItem(WELCOME_KEY); } cat
 function welcomeHtml(g: number): string {
   return `<div class="td-wrap td-narrow"><div class="td-welcome">
     <h1>Bienvenue ${icon("piano")}</h1>
-    <p>PianoFlow te fait apprendre le piano par petites séances, avec ton clavier MIDI.</p>
+    <p>PianoFlow te fait apprendre le piano par petites séances, avec ton clavier MIDI ou ton piano acoustique.</p>
     <ol class="td-steps">
-      <li><b>Branche ton clavier</b><small>en USB ou en Bluetooth. La pastille ${icon("piano")} en haut passe au vert quand il est reconnu.</small></li>
+      <li><b>Branche ton clavier, ou fais écouter ton piano</b><small>Clavier MIDI : en USB ou en Bluetooth, la pastille ${icon("piano")} en haut passe au vert quand il est reconnu. Piano acoustique : dans les réglages ${icon("settings")}, choisis « Micro » ; s'il n'est pas accordé, ajoute-le pour que l'appli apprenne son son.</small></li>
       <li><b>Combien de temps par jour ?</b><small>Tu pourras changer plus tard. Mieux vaut peu chaque jour que beaucoup une fois par semaine.</small>
         <span class="td-goals">${[10, 20, 30, 45].map((m) => `<button data-act="td:goal:${m}" class="${m === g ? "on" : ""}">${m} min</button>`).join("")}</span></li>
       <li><b>Où en es-tu ?</b>
